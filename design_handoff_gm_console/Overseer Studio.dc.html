@@ -3,14 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Offline vendoring: map the runtime's CDN URLs to local copies so the page
+     needs no network. The dc-runtime reads window.__resources before it loads
+     React (see cdnScriptFor in support.js) and drops the SRI check for local src. -->
+<script>
+  window.__resources = {
+    "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "./vendor/react.production.min.js",
+    "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "./vendor/react-dom.production.min.js"
+  };
+</script>
+<link rel="stylesheet" href="./vendor/fonts/fonts.css">
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   html, body { margin: 0; padding: 0; background: #0d1013; }
   * { box-sizing: border-box; }
