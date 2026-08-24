@@ -1,0 +1,15 @@
+{
+  "name": "DM Screen — GM Console",
+  "short_name": "DM Screen",
+  "description": "A game master's console for tabletop RPGs: initiative, live HP and conditions, dice, generators, and a player-facing second screen.",
+  "start_url": "./DM%20Screen.dc.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d1013",
+  "theme_color": "#12161b",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

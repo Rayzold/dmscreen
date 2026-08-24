@@ -1,12 +1,11 @@
-# Handoff: GM Console (Overseer Studio redesign)
+# Handoff: DM Screen (GM Console)
 
 ## Overview
 
-A desktop application UI for a tabletop RPG game master's screen. It is a redesign of
-overseer.studio, which today is a window manager for other people's tools (put a PDF, a
-VTT, a music player in a tile, then stack/pin/pop them out). The redesign keeps the tiled
-canvas but adds the thing the original lacks: **the app knows the state of the game**, not
-just the positions of the windows.
+A desktop application UI for a tabletop RPG game master's screen. Where a plain window
+manager only tracks tiles (put a PDF, a VTT, a music player in a tile, then stack/pin/pop
+them out), DM Screen keeps that tiled canvas but adds the thing a window manager lacks:
+**the app knows the state of the game**, not just the positions of the windows.
 
 The prototype depicts one specific moment — the party goes somewhere the GM didn't prep
 (a roadside shrine), and the GM improvises a combat encounter live. Everything on screen
@@ -30,7 +29,7 @@ Feature set added on top of the original product:
 The files in this bundle are **design references created in HTML** — a prototype showing
 the intended look and behavior. They are not production code to copy directly.
 
-`Overseer Studio.dc.html` is authored in a proprietary streaming-component format (`<x-dc>`
+`DM Screen.dc.html` is authored in a proprietary streaming-component format (`<x-dc>`
 template + a `DCLogic` class, resolved by `support.js`). Do not port that runtime. Read the
 file as a specification: the template is the DOM structure with inline styles, and the logic
 class is the state model and the handlers.
@@ -41,7 +40,7 @@ component library, and styling approach. If no environment exists yet: this is a
 (offline-capable, multi-window, native app embedding), so Electron or Tauri with React is the
 natural target.
 
-To view the prototype: open `Overseer Studio.dc.html` in a browser with `support.js` beside it.
+To view the prototype: open `DM Screen.dc.html` in a browser with `support.js` beside it.
 
 ## Fidelity
 
@@ -403,7 +402,5 @@ gradient compositions standing in for real map art or a VTT surface.
 - `screenshots/04-prep-mode.png` — Prep mode, with the prep banner on the canvas.
   (Captured at ~916px wide, narrower than the 1440px design width — treat the layout
   proportions in this README as authoritative over the screenshots.)
-- `Overseer Studio.dc.html` — the prototype. Template (markup + inline styles) then a logic class (state, handlers, derived styles).
+- `DM Screen.dc.html` — the prototype. Template (markup + inline styles) then a logic class (state, handlers, derived styles).
 - `support.js` — the runtime that resolves the prototype format. Needed only to open the file in a browser; not something to port.
-
-Reference for the product being redesigned: https://overseer.studio/features

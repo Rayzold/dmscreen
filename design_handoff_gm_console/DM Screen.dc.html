@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DM Screen — GM Console</title>
+<meta name="description" content="A game master's console for tabletop RPGs: initiative, live HP and conditions, dice, generators, and a player-facing second screen.">
+<meta name="theme-color" content="#12161b">
+<link rel="icon" href="./icon.svg">
+<link rel="manifest" href="./manifest.webmanifest">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
+</script>
 <!-- Offline vendoring: map the runtime's CDN URLs to local copies so the page
      needs no network. The dc-runtime reads window.__resources before it loads
      React (see cdnScriptFor in support.js) and drops the SRI check for local src. -->
@@ -29,6 +39,27 @@
   @keyframes om-pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
   @keyframes om-ring { 0% { box-shadow: 0 0 0 0 rgba(167,139,250,.55); } 100% { box-shadow: 0 0 0 12px rgba(167,139,250,0); } }
   input[type=range] { accent-color: #8f7ad6; }
+
+  /* Keyboard focus ring — the app's controls are custom-styled and otherwise
+     give no visible focus. Only shows for keyboard users (:focus-visible). */
+  :focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; border-radius: 4px; }
+
+  /* Respect users who ask for less motion: freeze the pulsing dots/rings. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  }
+
+  /* This is a fixed-layout desktop console (designed at 1440×900); below ~720px
+     the three-column body collapses. Show a friendly note instead of a broken UI. */
+  @media (max-width: 720px) {
+    #dc-root { display: none !important; }
+    body::after {
+      content: "DM Screen is designed for a large screen (1200px or wider). Open it on a desktop, or rotate to landscape, for the full game-master console.";
+      position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+      text-align: center; padding: 40px; background: #0d1013; color: #8b95a3;
+      font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 15px; line-height: 1.6;
+    }
+  }
 </style>
 </helmet>
 
@@ -36,7 +67,7 @@
 
   <header style="display: flex; align-items: center; gap: 18px; padding: 0 14px; background: #12161b; border-bottom: 1px solid #232a33;">
     <div style="display: flex; align-items: center; gap: 9px; white-space: nowrap; flex: none;">
-      <div style="width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, #a78bfa, #6d5bb5); display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #14101f;">O</div>
+      <div style="width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, #a78bfa, #6d5bb5); display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #14101f;">D</div>
       <div style="font-weight: 600; letter-spacing: -.01em;">Ashes of the Vell Road</div>
       <div style="color: #6f7987; font-size: 11px; padding-top: 1px;">Session 14</div>
     </div>
@@ -366,10 +397,10 @@
   <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closePalette }}" style="position: fixed; inset: 0; background: rgba(6,8,11,.62); backdrop-filter: blur(3px); z-index: 90; display: flex; justify-content: center; padding-top: 96px;">
       <div onClick="{{ stop }}" style="width: 620px; max-height: 460px; background: #14181d; border: 1px solid #333b47; border-radius: 13px; box-shadow: 0 30px 80px rgba(0,0,0,.75); display: flex; flex-direction: column; overflow: hidden;">
-        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search across 9 loaded PDFs, screens, tiles and monsters…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
-        <div style="overflow: auto; padding: 6px;">
+        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onPaletteKey }}" aria-label="Search rules, screens, tiles and monsters" placeholder="Search across 9 loaded PDFs, screens, tiles and monsters…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
+        <div role="listbox" aria-label="Search results" style="overflow: auto; padding: 6px;">
           <sc-for list="{{ results }}" as="r" hint-placeholder-count="6">
-            <button onClick="{{ r.open }}" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; background: none; border: 0; border-radius: 8px; color: inherit; font-family: inherit; text-align: left; cursor: pointer;" style-hover="background: #1c222a;">
+            <button onClick="{{ r.open }}" role="option" aria-selected="{{ r.selected }}" style="{{ r.rowStyle }}" style-hover="background: #1c222a;">
               <span style="{{ r.kindStyle }}">{{ r.kind }}</span>
               <span style="display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0;">
                 <span style="font-size: 13px; font-weight: 500;">{{ r.title }}</span>
@@ -417,7 +448,7 @@ class Component extends DCLogic {
   state = {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
-    tool: 'dice', sel: 'c1', tiles: 5,
+    pi: 0, tool: 'dice', sel: 'c1', tiles: 5,
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -452,9 +483,14 @@ class Component extends DCLogic {
   componentDidMount() {
     this._t = setInterval(() => this.setState(s => ({ secs: s.secs + 1 })), 1000);
     this._key = e => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState({ paletteOpen: true, query: '' }); }
-      else if (e.key === 'Escape') this.setState({ paletteOpen: false });
-      else if (e.key === 'Enter' && !this.state.paletteOpen) this.next();
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState({ paletteOpen: true, query: '', pi: 0 }); return; }
+      // Palette navigation (↑ ↓ ⏎ esc) is handled on the palette input via
+      // onPaletteKey, so it runs on the one visible instance with the right
+      // `this`. This document-level listener is mounted once per component
+      // instance by the runtime, which makes it the wrong place to drive it.
+      if (this.state.paletteOpen) return;
+      if (e.key === 'Escape') this.setState({ paletteOpen: false });
+      else if (e.key === 'Enter') this.next();
     };
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
@@ -491,6 +527,39 @@ class Component extends DCLogic {
   logIt(text) {
     const t = this.clockShort();
     this.setState(s => ({ log: [...s.log, { t, text }].slice(-40) }));
+  }
+
+  paletteHits() {
+    const q = this.state.query.trim().toLowerCase();
+    return RULES.filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
+  }
+
+  openResult(r) {
+    const books = ['Core Rules', 'Bestiary', 'Region Gazetteer'];
+    const i = RULES.indexOf(r);
+    const t = this.clockShort();
+    // One setState with every change (excerpt, tab, close, log). This runtime
+    // renders from the first setState of a tick, so a follow-up logIt() would be
+    // dropped — the app's other actions (next/hp) also fold their log in here.
+    this.setState(s => ({
+      ...(r.kind === 'rule' ? { excerpt: i, book: Math.max(0, books.indexOf(r.book)) } : {}),
+      paletteOpen: false,
+      log: [...s.log, { t, text: 'Opened “' + r.title + '” in a tile' }].slice(-40)
+    }));
+  }
+
+  onPaletteKey(e) {
+    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    // Handle it here and stop it: the component also has a document-level keydown
+    // listener (one per mount) whose Enter advances the initiative. Letting this
+    // key bubble there would fire next() right after we open a result.
+    e.preventDefault();
+    e.stopPropagation();
+    const n = this.paletteHits().length;
+    if (e.key === 'ArrowDown') { if (n) this.setState(s => ({ pi: (Math.min(s.pi, n - 1) + 1) % n })); }
+    else if (e.key === 'ArrowUp') { if (n) this.setState(s => ({ pi: (Math.min(s.pi, n - 1) - 1 + n) % n })); }
+    else if (e.key === 'Enter') { const r = this.paletteHits()[Math.min(this.state.pi, n - 1)]; if (r) this.openResult(r); }
+    else if (e.key === 'Escape') { this.setState({ paletteOpen: false }); }
   }
   clockShort() { const m = Math.floor(this.state.secs / 60); return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); }
 
@@ -554,8 +623,8 @@ class Component extends DCLogic {
       pick: () => this.logIt('Switched to screen \u201c' + x.name + '\u201d')
     }));
 
-    const q = s.query.trim().toLowerCase();
-    const hits = RULES.filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
+    const hits = this.paletteHits();
+    const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
     const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (k === 'rule' ? '#22192e' : k === 'screen' ? '#132420' : '#241f13') + '; color: ' + (k === 'rule' ? '#c4b2ff' : k === 'screen' ? '#74c3a7' : '#d0b25a') + ';';
 
@@ -570,12 +639,13 @@ class Component extends DCLogic {
       mapBorder: active.pc ? '#2f3a46' : '#46375f',
       prepBtn: modeBtn(isPrep), playBtn: modeBtn(!isPrep),
       setPrep: () => this.setState({ mode: 'prep' }), setPlay: () => this.setState({ mode: 'play' }),
-      openPalette: () => this.setState({ paletteOpen: true, query: '' }),
+      openPalette: () => this.setState({ paletteOpen: true, query: '', pi: 0 }),
       closePalette: () => this.setState({ paletteOpen: false }),
       stop: e => e.stopPropagation(),
       paletteRef: el => { this.pal = el; if (el) el.focus(); },
       canvasRef: el => { this.canvas = el; this._drag(el); },
-      onQuery: e => this.setState({ query: e.target.value }),
+      onQuery: e => this.setState({ query: e.target.value, pi: 0 }),
+      onPaletteKey: e => this.onPaletteKey(e),
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
       screens, tileCount: s.tiles,
       saveLabel: 'saved ' + (s.secs % 17) + 's ago',
@@ -664,15 +734,12 @@ class Component extends DCLogic {
 
       log: [...s.log].reverse().map(l => ({ t: l.t, text: l.text, style: 'flex: 1; color: ' + (l.hot ? '#e08d7c' : '#a7b0bc') + ';' })),
 
-      results: hits.map(r => ({
+      results: hits.map((r, i) => ({
         kind: r.kind, kindStyle: kindStyle(r.kind), title: r.title,
         sub: r.sub || r.body, meta: r.book ? r.book + ' p.' + r.page : 'open',
-        open: () => {
-          const i = RULES.indexOf(r);
-          if (r.kind === 'rule') this.setState({ excerpt: i, book: Math.max(0, books.indexOf(r.book)), paletteOpen: false });
-          else this.setState({ paletteOpen: false });
-          this.logIt('Opened \u201c' + r.title + '\u201d in a tile');
-        }
+        selected: i === pi ? 'true' : 'false',
+        rowStyle: 'display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; color: inherit; font-family: inherit; text-align: left; cursor: pointer; background: ' + (i === pi ? '#1c222a' : 'none') + ';',
+        open: () => this.openResult(r)
       })),
       noResults: hits.length === 0
     };

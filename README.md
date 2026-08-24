@@ -1,6 +1,6 @@
 # dmscreen
 
-A design handoff for **Overseer Studio** — a redesigned tabletop RPG game master's console
+A design handoff for **DM Screen** — a tabletop RPG game master's console
 (a tiled canvas that *knows the state of the game*: initiative, HP, conditions, dice, generators,
 a player-facing second screen, and more).
 
@@ -14,7 +14,7 @@ the browser, no build step or server required.
 ## What's here
 
 - [`design_handoff_gm_console/`](design_handoff_gm_console/) — the handoff bundle:
-  - `Overseer Studio.dc.html` — the interactive prototype (`<x-dc>` template + `DCLogic` state class).
+  - `DM Screen.dc.html` — the interactive prototype (`<x-dc>` template + `DCLogic` state class).
   - `support.js` — the runtime that resolves the prototype format (needed to view the file).
   - `README.md` — the full design spec: tokens, layout, interactions, and state model.
   - `screenshots/` — reference captures (run mode, player view, command palette, prep mode).

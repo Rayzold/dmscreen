@@ -1,0 +1,8 @@
+# Normalize text to LF in the repo; let Git handle working-tree endings.
+* text=auto eol=lf
+
+# Binary assets — never touch line endings.
+*.woff2 binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
