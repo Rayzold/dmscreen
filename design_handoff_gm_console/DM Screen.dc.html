@@ -44,6 +44,15 @@
      give no visible focus. Only shows for keyboard users (:focus-visible). */
   :focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; border-radius: 4px; }
 
+  /* Help marks — a small "?" beside a feature; hover (or long-press) shows a
+     native tooltip explaining what it does. Kept subtle so it never competes
+     with the UI, and flex:none so it doesn't disturb the labels it sits in. */
+  .help { display: inline-grid; place-items: center; width: 13px; height: 13px;
+    border-radius: 50%; border: 1px solid #2b333d; color: #6f7987; font-size: 9px;
+    font-weight: 700; line-height: 1; cursor: help; flex: none; user-select: none;
+    vertical-align: middle; }
+  .help:hover { border-color: #4a3f6b; color: #c4b2ff; }
+
   /* Respect users who ask for less motion: freeze the pulsing dots/rings. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
@@ -72,12 +81,15 @@
       <div style="color: #6f7987; font-size: 11px; padding-top: 1px;">Session 14</div>
     </div>
 
-    <div style="display: flex; background: #0d1013; border: 1px solid #262d36; border-radius: 8px; padding: 2px; gap: 2px;">
-      <button onClick="{{ setPrep }}" style="{{ prepBtn }}" style-hover="color: #e6e9ee;">Prep</button>
-      <button onClick="{{ setPlay }}" style="{{ playBtn }}" style-hover="color: #e6e9ee;">Run</button>
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <div style="display: flex; background: #0d1013; border: 1px solid #262d36; border-radius: 8px; padding: 2px; gap: 2px;">
+        <button onClick="{{ setPrep }}" style="{{ prepBtn }}" style-hover="color: #e6e9ee;">Prep</button>
+        <button onClick="{{ setPlay }}" style="{{ playBtn }}" style-hover="color: #e6e9ee;">Run</button>
+      </div>
+      <span class="help" title="Prep vs Run. Prep unlocks the canvas so you can arrange tiles on a 28px snap grid with collision on; Run locks the layout, runs the live session clock, and turns the status dot green.">?</span>
     </div>
 
-    <button onClick="{{ openPalette }}" style="flex: 1; max-width: 420px; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #0d1013; border: 1px solid #262d36; border-radius: 8px; color: #6f7987; font-family: inherit; font-size: 12px; text-align: left; cursor: pointer;" style-hover="border-color: #3a4351;">
+    <button onClick="{{ openPalette }}" style="flex: 1; max-width: 420px; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #0d1013; border: 1px solid #262d36; border-radius: 8px; color: #6f7987; font-family: inherit; font-size: 12px; text-align: left; cursor: pointer;" style-hover="border-color: #3a4351;" title="Command palette. Search across every loaded PDF, screen, tile and monster; ↑ ↓ move the selection, ⏎ opens the hit in a tile, ⌘K opens the palette from anywhere.">
       <span style="opacity: .8;">⌕</span>
       <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Search rules, screens, tiles, monsters…</span>
       <span style="border: 1px solid #2b333d; border-radius: 4px; padding: 1px 5px; font-size: 10px; color: #8b95a3;">⌘K</span>
@@ -92,17 +104,17 @@
       <span>{{ clock }}</span>
     </div>
 
-    <button onClick="{{ toggleCast }}" style="{{ castBtn }}">{{ castLabel }}</button>
+    <button onClick="{{ toggleCast }}" style="{{ castBtn }}" title="Show players. Casts only the battle map to a second screen (a TV or a player's laptop) — hit points, names, conditions, statblocks and notes stay on your screen.">{{ castLabel }}</button>
   </header>
 
   <div style="display: grid; grid-template-columns: 236px 1fr 306px; min-height: 0;">
 
     <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0;">
       <div style="padding: 10px;">
-        <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
+        <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" title="Type to filter the screen list below by name (case-insensitive)." style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
       </div>
 
-      <div style="padding: 4px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Screens</div>
+      <div style="display: flex; align-items: center; gap: 5px; padding: 4px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Screens<span class="help" title="Saved canvas layouts. Each screen is a full arrangement of tiles for a place or moment; click one to switch to it (its hotkey is on the right), and a ♪ marks a screen with audio playing.">?</span></div>
       <div style="padding: 0 6px; display: flex; flex-direction: column; gap: 1px;">
         <sc-for list="{{ screens }}" as="s" hint-placeholder-count="5">
           <button onClick="{{ s.pick }}" style="{{ s.style }}" style-hover="background: #1a1f26;">
@@ -115,7 +127,7 @@
         </sc-for>
       </div>
 
-      <div style="padding: 14px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Prefabs</div>
+      <div style="display: flex; align-items: center; gap: 5px; padding: 14px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Prefabs<span class="help" title="Reusable tile bundles. Drop one to add its whole set of tiles (a shop, a tavern, an ambush) onto the current screen in a single click — the count shows how many tiles it brings.">?</span></div>
       <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 4px;">
         <sc-for list="{{ prefabs }}" as="p" hint-placeholder-count="4">
           <button onClick="{{ p.drop }}" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #161b21; border: 1px solid #232a33; border-radius: 7px; color: #c3cad4; font-family: inherit; font-size: 12px; cursor: pointer; text-align: left;" style-hover="border-color: #4a3f6b; color: #e6e9ee;">
@@ -130,7 +142,7 @@
 
       <div style="margin: 10px; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
         <div style="display: flex; justify-content: space-between; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
-          <span>Soundscape</span><span>{{ mixLabel }}</span>
+          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene. Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. The count shows how many layers are live.">?</span></span><span>{{ mixLabel }}</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 7px;">
           <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="4">
@@ -161,6 +173,7 @@
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <span style="color: #8f7ad6; font-size: 11px;">▢</span>
             <span style="font-size: 11px; font-weight: 600;">Improvised — Vell Road Shrine</span>
+            <span class="help" title="The battle map. Tokens are placed by initiative order and follow it live; the tile's frame turns violet on a hostile's turn and slate on a PC's. Click any token to select that combatant and open its sheet. Drag the header to move the tile (snaps to a 28px grid; hold Alt to place freely).">?</span>
             <span style="flex: 1;"></span>
             <span style="color: #5f6875; font-size: 10px;">pinned · m</span>
           </div>
@@ -184,6 +197,7 @@
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <span style="color: #c9573f; font-size: 11px;">✦</span>
             <span style="font-size: 11px; font-weight: 600;">Statblock</span>
+            <span class="help" title="The selected combatant's live sheet (falls back to whoever's turn it is). The −5/−1/+1/+5 buttons apply damage and healing, clamped to 0…max; bloodied (≤50%) and down (0 hp) states and the hp-bar colour update automatically. Toggle conditions as pills; Actions lists its attacks.">?</span>
             <span style="flex: 1;"></span>
             <span style="color: #5f6875; font-size: 10px;">live</span>
           </div>
@@ -231,7 +245,7 @@
           </div>
           <div style="padding: 13px 14px; overflow: auto; flex: 1; font-family: 'Crimson Pro', Georgia, serif;">
             <div style="display: flex; justify-content: space-between; color: #6f7987; font-family: 'Space Grotesk', sans-serif; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;">
-              <span>{{ bookName }}</span><span>p. {{ bookPage }}</span>
+              <span style="display: flex; align-items: center; gap: 5px;">{{ bookName }}<span class="help" title="Rules reference across your loaded PDFs, split into books by the tabs above. Open a hit from the command palette (⌘K) and it lands here on the matching book and page — no digging through the PDF.">?</span></span><span>p. {{ bookPage }}</span>
             </div>
             <div style="margin-top: 8px; font-size: 17px; font-weight: 600;">{{ excerptTitle }}</div>
             <div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #c3cad4;">{{ excerptBody }}</div>
@@ -243,6 +257,7 @@
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <span style="color: #d0b25a; font-size: 11px;">✎</span>
             <span style="font-size: 11px; font-weight: 600;">Scene notes</span>
+            <span class="help" title="Freeform prep notes for the current scene, plus a beat checklist — tick a beat as it happens and it greys out. Generator results (names, loot, encounters) can drop in here with one click.">?</span>
             <span style="flex: 1;"></span>
             <span style="color: #5f6875; font-size: 10px;">saved</span>
           </div>
@@ -265,6 +280,7 @@
           <div data-grab="1" style="display: flex; align-items: stretch; height: 30px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <button onClick="{{ pickDice }}" style="{{ diceTab }}">Dice</button>
             <button onClick="{{ pickGen }}" style="{{ genTab }}">Generators</button>
+            <span class="help" title="Two tools in one tile. Dice: tap a die to roll it — the total and the individual dice show above a running history, and a natural 20 turns gold. Generators: roll a random NPC name, pocket loot, or an encounter, then drop the result into your scene notes." style="align-self: center; margin: 0 8px;">?</span>
           </div>
 
           <sc-if value="{{ onDice }}" hint-placeholder-val="{{ true }}">
@@ -311,8 +327,10 @@
 
     <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px;">
-        <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">Initiative · round {{ round }}</span>
-        <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;">Next ⏎</button>
+        <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
+        <span class="help" title="Turn order, highest initiative first. The active combatant is highlighted and its map token rings; click any row to select that combatant. 'Next' (or press ⏎) advances the turn and rolls the round over. Downed combatants dim and strike through.">?</span>
+        <span style="flex: 1;"></span>
+        <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
       </div>
 
       <div style="padding: 0 8px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
@@ -334,7 +352,7 @@
       </div>
 
       <div style="margin: 12px 12px 0; padding-top: 10px; border-top: 1px solid #232a33;">
-        <div style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Party · passives</div>
+        <div style="display: flex; align-items: center; gap: 5px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Party · passives<span class="help" title="Always-visible passive scores for the party — Perception (per) and Insight (ins) with each character's AC — so you can answer 'do they notice?' or 'does it hit?' without stopping to ask for a roll.">?</span></div>
         <div style="margin-top: 7px; display: flex; flex-direction: column; gap: 4px;">
           <sc-for list="{{ party }}" as="p" hint-placeholder-count="4">
             <div style="display: grid; grid-template-columns: 1fr 34px 34px 34px; gap: 4px; align-items: center; font-size: 11px; color: #c3cad4; font-variant-numeric: tabular-nums;">
@@ -350,7 +368,7 @@
         </div>
       </div>
 
-      <div style="margin: 12px 12px 0; padding-top: 10px; border-top: 1px solid #232a33; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Session log</div>
+      <div style="display: flex; align-items: center; gap: 5px; margin: 12px 12px 0; padding-top: 10px; border-top: 1px solid #232a33; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Session log<span class="help" title="An automatic transcript of the session. Every action here — damage and healing, dice rolls, turn changes, opened rules, dropped prefabs — is timestamped and written newest-first, so you have a record without taking notes. Critical moments (a combatant going down) show in red.">?</span></div>
       <div style="margin: 6px 12px 12px; overflow: auto; flex: 1; min-height: 70px; display: flex; flex-direction: column; gap: 5px;">
         <sc-for list="{{ log }}" as="l" hint-placeholder-count="6">
           <div style="display: flex; gap: 7px; font-size: 11px; line-height: 1.35;">
