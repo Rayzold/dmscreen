@@ -104,7 +104,7 @@
       <span>{{ clock }}</span>
     </div>
 
-    <button onClick="{{ toggleCast }}" style="{{ castBtn }}" title="Show players. Casts only the battle map to a second screen (a TV or a player's laptop) — hit points, names, conditions, statblocks and notes stay on your screen.">{{ castLabel }}</button>
+    <button onClick="{{ toggleCast }}" style="{{ castBtn }}" title="Show players. Opens a real second window casting only the map (drag it to a TV or a player's laptop) — hit points, names, conditions, statblocks and notes stay on your screen. If a pop-up blocker stops it, an in-page fallback appears.">{{ castLabel }}</button>
   </header>
 
   <div style="display: grid; grid-template-columns: 236px 1fr 306px; min-height: 0;">
@@ -142,7 +142,7 @@
 
       <div style="margin: 10px; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
         <div style="display: flex; justify-content: space-between; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
-          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene — it actually plays (synthesized in the browser). Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. Sound starts on your first click on the page. The count shows how many layers are live.">?</span></span><span>{{ mixLabel }}</span>
+          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene — it actually plays (synthesized in the browser). Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. Sound starts on your first click on the page. Press M (or the mute button) to silence everything at once without losing the mix.">?</span></span><span style="display: flex; align-items: center; gap: 6px;"><button onClick="{{ toggleMute }}" style="{{ muteBtn }}" title="Mute all sound — shortcut: M">{{ muteLabel }}</button><span>{{ mixLabel }}</span></span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 7px;">
           <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="4">
@@ -173,19 +173,16 @@
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <span style="color: #8f7ad6; font-size: 11px;">▢</span>
             <span style="font-size: 11px; font-weight: 600;">Improvised — Vell Road Shrine</span>
-            <span class="help" title="The battle map. Tokens are placed by initiative order and follow it live; the tile's frame turns violet on a hostile's turn and slate on a PC's. Click any token to select that combatant and open its sheet. Drag the header to move the tile (snaps to a 28px grid; hold Alt to place freely).">?</span>
+            <span class="help" title="The map surface is a live, generated world from Hexwright (embedded). Combat tokens sit on top, placed by initiative order; the tile's frame turns violet on a hostile's turn and slate on a PC's. Click any token to select that combatant and open its sheet. Drag the header to move the tile (snaps to a 28px grid; hold Alt to place freely).">?</span>
             <span style="flex: 1;"></span>
             <span style="color: #5f6875; font-size: 10px;">pinned · m</span>
           </div>
-          <div style="position: relative; flex: 1; background:
-              radial-gradient(120px 90px at 22% 30%, rgba(79,168,139,.16), transparent 70%),
-              radial-gradient(160px 120px at 74% 68%, rgba(143,122,214,.14), transparent 70%),
-              radial-gradient(90px 70px at 55% 22%, rgba(208,178,90,.10), transparent 70%),
-              #10151a;">
-            <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px); background-size: 34px 34px;"></div>
-            <div style="position: absolute; left: 46%; top: 8%; width: 8%; height: 84%; background: rgba(120,132,150,.10); transform: rotate(6deg);"></div>
-            <div style="position: absolute; left: 50%; top: 34%; width: 88px; height: 88px; margin-left: -44px; border: 1px solid rgba(208,178,90,.35); border-radius: 4px; background: rgba(208,178,90,.07);"></div>
-            <div style="position: absolute; left: 50%; top: 34%; margin-left: -44px; margin-top: -14px; color: #8a7f5f; font-size: 10px; letter-spacing: .06em;">SHRINE</div>
+          <div style="position: relative; flex: 1; background: #10151a; overflow: hidden;">
+            <!-- Live map surface: a Hexwright-generated world (same-origin embed).
+                 Used as a backdrop (pointer-events: none) so the combat tokens on
+                 top stay clickable and scrolling the tile doesn't pan the map. -->
+            <iframe src="https://rayzold.github.io/hexwright/?embed=1&seed=vell-road" title="Hexwright map" loading="lazy" style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none;"></iframe>
+            <div style="position: absolute; inset: 0; box-shadow: inset 0 0 60px rgba(0,0,0,.4); pointer-events: none;"></div>
             <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="8">
               <div onClick="{{ t.pick }}" style="{{ t.style }}" title="{{ t.title }}">{{ t.initial }}</div>
             </sc-for>
@@ -390,7 +387,7 @@
     <span>alt = free place</span>
   </footer>
 
-  <sc-if value="{{ castOn }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ castFallback }}" hint-placeholder-val="{{ false }}">
     <div data-tile="cast" style="position: fixed; right: 22px; bottom: 46px; width: 320px; background: #0b0e12; border: 1px solid #46375f; border-radius: 11px; box-shadow: 0 22px 60px rgba(0,0,0,.7); overflow: hidden; z-index: 60;">
       <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; background: #191325; border-bottom: 1px solid #2f2545; cursor: grab;">
         <span style="width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: om-pulse 2s infinite;"></span>
@@ -398,17 +395,13 @@
         <span style="flex: 1;"></span>
         <button onClick="{{ toggleCast }}" style="background: none; border: 0; color: #6f7987; font-size: 13px; cursor: pointer;">✕</button>
       </div>
-      <div style="position: relative; height: 176px; background:
-          radial-gradient(120px 90px at 22% 30%, rgba(79,168,139,.16), transparent 70%),
-          radial-gradient(160px 120px at 74% 68%, rgba(143,122,214,.14), transparent 70%),
-          #10151a;">
-        <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size: 22px 22px;"></div>
-        <div style="position: absolute; left: 50%; top: 36%; width: 54px; height: 54px; margin-left: -27px; border: 1px solid rgba(208,178,90,.35); border-radius: 3px; background: rgba(208,178,90,.07);"></div>
+      <div style="position: relative; height: 176px; background: #10151a; overflow: hidden;">
+        <iframe src="https://rayzold.github.io/hexwright/?embed=1&seed=vell-road" title="Hexwright map" style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none;"></iframe>
         <sc-for list="{{ castTokens }}" as="t" hint-placeholder-count="8">
           <div style="{{ t.style }}">{{ t.initial }}</div>
         </sc-for>
       </div>
-      <div style="padding: 7px 10px; color: #6f7987; font-size: 10.5px;">Map only. Notes, statblocks, and hp stay on your screen.</div>
+      <div style="padding: 7px 10px; color: #6f7987; font-size: 10.5px;">Pop-up blocked, so this is the in-page fallback. Map only — notes, statblocks, and hp stay on your screen.</div>
     </div>
   </sc-if>
 
@@ -466,7 +459,7 @@ class Component extends DCLogic {
   state = {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
-    pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a',
+    pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false,
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -507,8 +500,12 @@ class Component extends DCLogic {
       // `this`. This document-level listener is mounted once per component
       // instance by the runtime, which makes it the wrong place to drive it.
       if (this.state.paletteOpen) return;
+      // Don't fire letter shortcuts while typing in a field or editable note.
+      const t = e.target, tag = t && t.tagName;
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable);
       if (e.key === 'Escape') this.setState({ paletteOpen: false });
-      else if (e.key === 'Enter') this.next();
+      else if (e.key === 'Enter' && !typing) this.next();
+      else if ((e.key === 'm' || e.key === 'M') && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.toggleMute(); }
     };
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
@@ -526,6 +523,7 @@ class Component extends DCLogic {
     document.removeEventListener('pointerdown', this._resumeAudio);
     document.removeEventListener('keydown', this._resumeAudio);
     if (this._audio) { try { this._audio.ctx.close(); } catch (e) {} this._audio = null; }
+    this.closeCast();
   }
 
   /* --- Soundscape audio engine ---------------------------------------------
@@ -587,9 +585,65 @@ class Component extends DCLogic {
     const a = this.ensureAudio();
     if (!a) return;
     if (a.ctx.state === 'suspended') a.ctx.resume();
+    // Mute-all rides the master gain, so it silences everything without losing
+    // each layer's on/off and volume (unmute restores the exact mix).
+    a.master.gain.setTargetAtTime(this.state.muted ? 0 : 0.6, a.ctx.currentTime, 0.03);
     this.state.sounds.forEach((s, i) => a.layers[i] && a.layers[i].set(s.on, s.level));
   }
-  componentDidUpdate() { if (this.pal && document.activeElement !== this.pal) this.pal.focus(); }
+  toggleMute() {
+    this.setState(s => ({ muted: !s.muted }));
+    this.syncAudio();
+    this.logIt(this.state.muted ? 'Muted all sound' : 'Unmuted sound');
+  }
+
+  /* --- Player view: a real second window ------------------------------------
+     "Show players" opens a genuine pop-up window casting the live map (a
+     Hexwright embed) with the tokens on top — no hp, names, or notes. If the
+     browser blocks the pop-up we fall back to the in-page panel. */
+  toggleCast() {
+    if (this.state.castOn || this.state.castFallback) return this.closeCast();
+    const w = window.open('', 'dmscreen_players', 'width=1024,height=640');
+    if (!w) { this.setState({ castFallback: true }); this.logIt('Pop-up blocked — player view shown in-page'); return; }
+    this._pop = w;
+    w.document.open();
+    w.document.write(
+      '<!doctype html><html><head><meta charset="utf-8"><title>DM Screen — Player view</title>' +
+      '<style>html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden;font-family:system-ui,sans-serif}' +
+      '#wrap{position:relative;height:100vh}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}' +
+      '#tok{position:absolute;inset:0;pointer-events:none}' +
+      '.t{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;display:grid;place-items:center;font:600 13px system-ui;color:#0d1013;border:2px solid rgba(0,0,0,.45)}' +
+      '#foot{position:absolute;left:0;right:0;bottom:0;padding:9px 12px;background:rgba(11,14,18,.82);color:#8b95a3;font-size:13px}</style></head>' +
+      '<body><div id="wrap"><iframe src="https://rayzold.github.io/hexwright/?embed=1&seed=vell-road"></iframe>' +
+      '<div id="tok"></div><div id="foot">Map only. Notes, statblocks, and hit points stay on the GM screen.</div></div></body></html>'
+    );
+    w.document.close();
+    this.setState({ castOn: true });
+    this.logIt('Shared the map to a player window');
+    this._popTimer = setInterval(() => { if (!this._pop || this._pop.closed) this.closeCast(); }, 800);
+    this.updatePop();
+  }
+  updatePop() {
+    if (!this._pop || this._pop.closed) return;
+    const doc = this._pop.document;
+    const tok = doc && doc.getElementById('tok');
+    if (!tok) return;
+    tok.innerHTML = this.state.combatants.map(c => {
+      const bg = c.hp === 0 ? '#3a434e' : c.pc ? '#4fa88b' : '#c9573f';
+      return '<div class="t" style="left:' + c.x + '%;top:' + c.y + '%;background:' + bg + '">' + c.name[0] + '</div>';
+    }).join('');
+  }
+  closeCast() {
+    if (this._popTimer) { clearInterval(this._popTimer); this._popTimer = null; }
+    if (this._pop && !this._pop.closed) { try { this._pop.close(); } catch (e) {} }
+    this._pop = null;
+    const was = this.state.castOn || this.state.castFallback;
+    this.setState({ castOn: false, castFallback: false });
+    if (was) this.logIt('Stopped sharing');
+  }
+  componentDidUpdate() {
+    if (this.pal && document.activeElement !== this.pal) this.pal.focus();
+    if (this.state.castOn) this.updatePop();
+  }
 
   _drag(root) {
     if (!root || root.__dragBound) return;
@@ -745,10 +799,10 @@ class Component extends DCLogic {
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
       screens, tileCount: s.tiles,
       saveLabel: 'saved ' + (s.secs % 17) + 's ago',
-      castStatus: s.castOn ? 'casting 1 tile to TV' : 'nothing shared',
-      castLabel: s.castOn ? 'Stop sharing' : 'Show players',
-      castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + (s.castOn ? '#6d5bb5' : '#2b333d') + '; background: ' + (s.castOn ? '#2c2140' : '#171c22') + '; color: ' + (s.castOn ? '#c4b2ff' : '#c3cad4') + ';',
-      toggleCast: () => { this.setState(x => ({ castOn: !x.castOn })); this.logIt(s.castOn ? 'Stopped sharing' : 'Shared the map to the TV'); },
+      castStatus: (s.castOn || s.castFallback) ? 'casting the map to players' : 'nothing shared',
+      castLabel: (s.castOn || s.castFallback) ? 'Stop sharing' : 'Show players',
+      castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + ((s.castOn || s.castFallback) ? '#6d5bb5' : '#2b333d') + '; background: ' + ((s.castOn || s.castFallback) ? '#2c2140' : '#171c22') + '; color: ' + ((s.castOn || s.castFallback) ? '#c4b2ff' : '#c3cad4') + ';',
+      toggleCast: () => this.toggleCast(),
 
       prefabs: [
         { name: 'Roadside Ambush', count: '5 tiles' },
@@ -764,7 +818,10 @@ class Component extends DCLogic {
         toggle: () => { this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, on: !y.on } : y) })); this.syncAudio(); },
         set: e => { const v = +e.target.value; this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, level: v, on: v > 0 } : y) })); this.syncAudio(); }
       })),
-      mixLabel: s.sounds.filter(x => x.on).length + ' layers',
+      mixLabel: s.muted ? 'all muted' : (s.sounds.filter(x => x.on).length + ' layers'),
+      toggleMute: () => this.toggleMute(),
+      muteLabel: s.muted ? 'muted' : 'mute',
+      muteBtn: 'font-family: inherit; font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid ' + (s.muted ? '#6d5bb5' : '#2b333d') + '; background: ' + (s.muted ? '#2c2140' : 'transparent') + '; color: ' + (s.muted ? '#c4b2ff' : '#6f7987') + ';',
 
       tokens: s.combatants.map(c => ({
         initial: c.name[0], title: c.name + ' \u00b7 ' + c.hp + '/' + c.max,
