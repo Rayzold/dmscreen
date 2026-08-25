@@ -128,6 +128,7 @@
           </sc-if>
         </div>
         <input ref="{{ importRef }}" type="file" accept="application/json,.json" onChange="{{ onImportFile }}" style="display: none;">
+        <button onClick="{{ openCampaignNotion }}" style="width: 100%; margin-top: 4px; height: 22px; background: none; border: 1px solid #2b333d; border-radius: 6px; color: #7fb4c4; font-family: inherit; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;" style-hover="border-color: #3a5560; background: #101a1e;" title="Open your Notion campaign hub in a new tab">Campaign hub in Notion ↗</button>
       </div>
       <div style="padding: 10px;">
         <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" title="Type to filter the screen list below by name (case-insensitive)." style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
@@ -655,6 +656,10 @@ const PREFABS = [
   { name: 'Merv’s Magic Shop', count: '4 tiles' },
   { name: 'Any Tavern', count: '6 tiles' },
   { name: 'The Citadel', count: '9 tiles' }
+];
+// External links surfaced in the command palette (open in a new tab).
+const LINKS = [
+  { title: 'The Scarred Lands — Campaign Hub', sub: 'Notion · your campaign notes', url: 'https://www.notion.so/355414fb2dda8106a273cf4cc9a08ae7' }
 ];
 
 // --- Music library helpers ------------------------------------------------
@@ -1225,6 +1230,7 @@ class Component extends DCLogic {
     for (const x of SCREENS) out.push({ kind: 'screen', title: x.name, sub: 'screen · hotkey ' + x.key, _screen: x.key });
     for (const p of PREFABS) out.push({ kind: 'tile', title: p.name, sub: 'prefab · ' + p.count, _prefab: p });
     for (const c of s.combatants) out.push({ kind: 'monster', title: c.name, sub: (c.pc ? 'player character · ' + c.badge : 'hostile · ' + c.badge) + ' · ' + c.hp + '/' + c.max + ' hp', _id: c.id });
+    for (const l of LINKS) out.push({ kind: 'link', title: l.title, sub: l.sub, _url: l.url });
     return out;
   }
   paletteHits() {
@@ -1247,6 +1253,9 @@ class Component extends DCLogic {
       this.setState(s => ({ paletteOpen: false, tileSeq: s.tileSeq + 1, tiles: s.tiles + parseInt(p.count, 10), extraTiles: [...s.extraTiles, { id, name: p.name, count: p.count, x: 300 + (n % 5) * 26, y: 210 + (n % 5) * 26 }], log: [...s.log, { t, text: 'Dropped prefab “' + p.name + '” (' + p.count + ')' }].slice(-40) }));
     } else if (r.kind === 'monster') {
       this.setState(s => ({ sel: r._id, paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in the statblock' }].slice(-40) }));
+    } else if (r.kind === 'link') {
+      try { window.open(r._url, '_blank', 'noopener'); } catch (e) {}
+      this.setState(s => ({ paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in Notion' }].slice(-40) }));
     } else {
       this.setState({ paletteOpen: false });
     }
@@ -1506,8 +1515,8 @@ class Component extends DCLogic {
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
-    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514' };
-    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c' };
+    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328' };
+    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4' };
     const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (kindBg[k] || '#241f13') + '; color: ' + (kindFg[k] || '#d0b25a') + ';';
 
     const excerpt = RULES[s.excerpt];
@@ -1556,6 +1565,7 @@ class Component extends DCLogic {
       deleteCampaign: () => this.deleteCampaign(),
       exportCampaign: () => this.exportCampaign(),
       importCampaign: () => { if (this._importInput) this._importInput.click(); },
+      openCampaignNotion: () => { try { window.open(LINKS[0].url, '_blank', 'noopener'); } catch (e) {} },
       importRef: el => { this._importInput = el; },
       onImportFile: e => { if (e.target.files && e.target.files[0]) this.importCampaign(e.target.files[0]); e.target.value = ''; },
       screens, tileCount: s.tiles,
