@@ -111,6 +111,24 @@
   <div style="display: grid; grid-template-columns: 236px 1fr 306px; min-height: 0;">
 
     <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-y: auto;">
+      <div style="padding: 10px 10px 0;">
+        <div style="display: flex; align-items: center; gap: 5px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 6px;">Campaign<span class="help" title="Save the whole session — combatants, HP, notes, tile layouts and soundscape — as a named campaign on this device, or export it to a .json file you can back up or move to another machine and import. Loading or importing replaces the current session.">?</span></div>
+        <div style="display: flex; gap: 4px;">
+          <select value="{{ campaign }}" onChange="{{ onCampaign }}" title="Load a saved campaign" style="flex: 1; min-width: 0; height: 24px; background: #0d1013; border: 1px solid #262d36; border-radius: 6px; color: #e6e9ee; font-family: inherit; font-size: 10.5px;">
+            <option value="">Campaigns…</option>
+            <sc-for list="{{ campaignNames }}" as="c" hint-placeholder-count="2"><option value="{{ c }}">{{ c }}</option></sc-for>
+          </select>
+          <button onClick="{{ saveCampaign }}" style="height: 24px; padding: 0 8px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="background: #2c2140;" title="Save the current session as a campaign">save</button>
+        </div>
+        <div style="display: flex; gap: 4px; margin-top: 4px;">
+          <button onClick="{{ exportCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Download the current session as a .json file">⭳ export</button>
+          <button onClick="{{ importCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Load a campaign from a .json file">⭱ import</button>
+          <sc-if value="{{ canDeleteCampaign }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ deleteCampaign }}" style="width: 24px; height: 22px; background: #211514; border: 1px solid #452a26; border-radius: 6px; color: #e08d7c; font-family: inherit; font-size: 11px; cursor: pointer;" title="Delete the selected campaign">✕</button>
+          </sc-if>
+        </div>
+        <input ref="{{ importRef }}" type="file" accept="application/json,.json" onChange="{{ onImportFile }}" style="display: none;">
+      </div>
       <div style="padding: 10px;">
         <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" title="Type to filter the screen list below by name (case-insensitive)." style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
       </div>
@@ -258,13 +276,20 @@
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
             <span style="color: #c9573f; font-size: 11px;">✦</span>
             <span style="font-size: 11px; font-weight: 600;">Statblock</span>
-            <span class="help" title="The selected combatant's live sheet (falls back to whoever's turn it is). The −5/−1/+1/+5 buttons apply damage and healing, clamped to 0…max; bloodied (≤50%) and down (0 hp) states and the hp-bar colour update automatically. Toggle conditions as pills; Actions lists its attacks.">?</span>
+            <span class="help" title="The selected combatant's live, editable sheet (falls back to whoever's turn it is). Edit the name, initiative, AC, max HP, tag and PC/foe inline; the −5/−1/+1/+5 buttons apply damage and healing. Bloodied (≤50%) and down (0 hp) states update automatically. Add combatants with ＋ in the initiative rail; ✕ here removes this one.">?</span>
             <span style="flex: 1;"></span>
-            <span style="color: #5f6875; font-size: 10px;">live</span>
+            <button onClick="{{ removeSel }}" style="background: none; border: 0; color: #6f7987; font-size: 12px; cursor: pointer; padding: 0;" title="Remove this combatant">✕</button>
           </div>
           <div style="padding: 12px; overflow: auto; flex: 1;">
-            <div style="font-family: 'Crimson Pro', Georgia, serif; font-size: 21px; font-weight: 600; letter-spacing: -.01em;">{{ selName }}</div>
+            <input value="{{ selName }}" onChange="{{ onSelName }}" placeholder="Name…" style="width: 100%; font-family: 'Crimson Pro', Georgia, serif; font-size: 21px; font-weight: 600; letter-spacing: -.01em; background: none; border: 0; color: #e6e9ee; outline: none; padding: 0;">
             <div style="color: #8b95a3; font-size: 11px; font-style: italic; margin-top: 1px;">{{ selMeta }}</div>
+            <div style="margin-top: 9px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 7px; font-family: 'Space Grotesk', sans-serif;">
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 600; letter-spacing: .06em; color: #5f6875; text-transform: uppercase;">Init<input value="{{ selInit }}" onChange="{{ onSelInit }}" type="number" style="{{ numInput }}"></label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 600; letter-spacing: .06em; color: #5f6875; text-transform: uppercase;">AC<input value="{{ selAc }}" onChange="{{ onSelAc }}" type="number" style="{{ numInput }}"></label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 600; letter-spacing: .06em; color: #5f6875; text-transform: uppercase;">Max<input value="{{ selMax }}" onChange="{{ onSelMax }}" type="number" style="{{ numInput }}"></label>
+              <label style="grid-column: 1 / 3; display: flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 600; letter-spacing: .06em; color: #5f6875; text-transform: uppercase;">Tag<input value="{{ selBadge }}" onChange="{{ onSelBadge }}" style="{{ txtInput }}"></label>
+              <button onClick="{{ toggleSelPc }}" style="{{ pcBtn }}" title="Toggle player character / foe">{{ pcLabel }}</button>
+            </div>
 
             <div style="margin-top: 12px; display: flex; align-items: baseline; gap: 6px;">
               <span style="font-family: 'Crimson Pro', serif; font-size: 30px; font-weight: 600; color: {{ selHpColor }}; font-variant-numeric: tabular-nums; line-height: 1;">{{ selHp }}</span>
@@ -422,6 +447,7 @@
         <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
         <span class="help" title="Turn order, highest initiative first. The active combatant is highlighted and its map token rings; click any row to select that combatant. 'Next' (or press ⏎) advances the turn and rolls the round over. Downed combatants dim and strike through.">?</span>
         <span style="flex: 1;"></span>
+        <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a combatant to the initiative">＋</button>
         <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
       </div>
 
@@ -604,15 +630,16 @@ class Component extends DCLogic {
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
     extraTiles: [], tileSeq: 1, pdf: null, layouts: {},
+    campaigns: {}, campaign: '',
     combatants: [
-      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
-      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
-      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [] },
-      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, pc: false, badge: 'archer', x: 70, y: 24, conds: [] },
-      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, pc: false, badge: 'archer', x: 78, y: 44, conds: ['Prone'] },
-      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [] },
-      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, pc: false, badge: 'pack', x: 66, y: 62, conds: [] },
-      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [] }
+      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, ac: 15, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
+      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, ac: 15, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
+      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, ac: 18, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [] },
+      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, ac: 12, pc: false, badge: 'archer', x: 70, y: 24, conds: [] },
+      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, ac: 12, pc: false, badge: 'archer', x: 78, y: 44, conds: ['Prone'] },
+      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, ac: 12, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [] },
+      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, ac: 13, pc: false, badge: 'pack', x: 66, y: 62, conds: [] },
+      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, ac: 16, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [] }
     ],
     sounds: [
       { id: 'L1', category: 'Travel', trackName: null, level: 55, on: false },
@@ -657,6 +684,7 @@ class Component extends DCLogic {
     this.loadNotes();
     this.loadCatOverrides();
     this.loadLayouts();
+    this.loadCampaignList();
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
@@ -934,6 +962,58 @@ class Component extends DCLogic {
     this._applyPending = key;   // positions applied after the render (componentDidUpdate)
   }
 
+  /* --- Campaigns: name/save/load and export/import the whole session -------- */
+  loadCampaignList() { try { const c = JSON.parse(localStorage.getItem('dmscreen.campaigns') || '{}'); if (c && typeof c === 'object') this.setState({ campaigns: c }); } catch (e) {} }
+  snapshot() {
+    const s = this.state;
+    return { v: 1, savedAt: Date.now(), combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel, screen: s.screen, extraTiles: s.extraTiles, layouts: s.layouts, noteTitle: s.noteTitle, noteBody: s.noteBody, beats: s.beats, sounds: s.sounds, catOverrides: s.catOverrides };
+  }
+  applySnapshot(d) {
+    if (!d || typeof d !== 'object') return;
+    if (this._layerAudio) { for (const k in this._layerAudio) { try { this._layerAudio[k].pause(); } catch (e) {} } this._layerAudio = {}; }
+    const patch = {};
+    ['combatants', 'turn', 'round', 'sel', 'screen', 'extraTiles', 'layouts', 'noteTitle', 'noteBody', 'beats', 'sounds', 'catOverrides'].forEach(k => { if (d[k] !== undefined) patch[k] = d[k]; });
+    this.setState(patch);
+    this.persistNotes(); this.persistLayouts();
+    this._applyPending = this.state.screen;   // restore this screen's tile positions
+    this.bindLayerTracks();                    // re-pool soundscape to the loaded library
+  }
+  saveCampaign() {
+    const name = (window.prompt('Save the whole session as a campaign named:', this.state.campaign || '') || '').trim();
+    if (!name) return;
+    const snap = this.snapshot();
+    this.setState(s => { const campaigns = { ...s.campaigns, [name]: snap }; try { localStorage.setItem('dmscreen.campaigns', JSON.stringify(campaigns)); } catch (e) {} return { campaigns, campaign: name }; });
+    this.logIt('Saved campaign “' + name + '”');
+  }
+  loadCampaign(name) {
+    if (!name) { this.setState({ campaign: '' }); return; }
+    const snap = this.state.campaigns[name];
+    if (!snap) return;
+    this.setState({ campaign: name });
+    this.applySnapshot(snap);
+    this.logIt('Loaded campaign “' + name + '”');
+  }
+  deleteCampaign() {
+    const name = this.state.campaign; if (!name) return;
+    this.setState(s => { const campaigns = { ...s.campaigns }; delete campaigns[name]; try { localStorage.setItem('dmscreen.campaigns', JSON.stringify(campaigns)); } catch (e) {} return { campaigns, campaign: '' }; });
+  }
+  exportCampaign() {
+    const snap = this.snapshot();
+    const blob = new Blob([JSON.stringify(snap, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = (this.state.campaign || 'dm-screen-campaign') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.logIt('Exported campaign');
+  }
+  importCampaign(file) {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => { try { const d = JSON.parse(r.result); this.applySnapshot(d); this.setState({ campaign: '' }); this.logIt('Imported campaign from “' + file.name + '”'); } catch (e) { this.logIt('That file was not a valid campaign'); } };
+    r.readAsText(file);
+  }
+
   /* --- Rulebook: render a real PDF the user loads (via pdf.js) --------------- */
   loadPdfFile(file) {
     if (!file || !window.pdfjsLib) return;
@@ -1131,6 +1211,48 @@ class Component extends DCLogic {
     }));
   }
 
+  /* --- Editable combatants -------------------------------------------------- */
+  editCombatant(id, field, value) {
+    this.setState(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      let combatants = s.combatants.map(c => {
+        if (c.id !== id) return c;
+        const nc = { ...c };
+        if (field === 'name' || field === 'badge') nc[field] = value;
+        else if (field === 'pc') nc.pc = !!value;
+        else if (field === 'init' || field === 'ac') nc[field] = Math.max(0, parseInt(value, 10) || 0);
+        else if (field === 'max') { nc.max = Math.max(1, parseInt(value, 10) || 1); nc.hp = Math.min(nc.hp, nc.max); }
+        else if (field === 'hp') nc.hp = Math.max(0, Math.min(c.max, parseInt(value, 10) || 0));
+        return nc;
+      });
+      let turn = s.turn;
+      if (field === 'init') { combatants = combatants.slice().sort((a, b) => b.init - a.init); const i = combatants.findIndex(c => c.id === activeId); turn = i < 0 ? 0 : i; }
+      return { combatants, turn };
+    });
+  }
+  addCombatant() {
+    const id = 'x' + Date.now().toString(36);
+    this.setState(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [] };
+      const combatants = [...s.combatants, nc].sort((a, b) => b.init - a.init);
+      const i = combatants.findIndex(c => c.id === activeId);
+      return { combatants, turn: i < 0 ? 0 : i, sel: id };
+    });
+    this.logIt('Added a combatant');
+  }
+  removeCombatant(id) {
+    this.setState(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const combatants = s.combatants.filter(c => c.id !== id);
+      if (!combatants.length) return { combatants, turn: 0, sel: null };
+      const i = combatants.findIndex(c => c.id === activeId);
+      const turn = i < 0 ? 0 : i;
+      const sel = (s.sel === id) ? combatants[Math.min(turn, combatants.length - 1)].id : s.sel;
+      return { combatants, turn, sel };
+    });
+  }
+
   roll(spec) {
     const m = spec.match(/^(\d*)d(\d+)$/);
     const n = parseInt(m[1] || '1', 10), f = parseInt(m[2], 10);
@@ -1203,6 +1325,14 @@ class Component extends DCLogic {
       onQuery: e => this.setState({ query: e.target.value, pi: 0 }),
       onPaletteKey: e => this.onPaletteKey(e),
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
+      campaignNames: Object.keys(s.campaigns).sort(), campaign: s.campaign, canDeleteCampaign: !!s.campaign,
+      onCampaign: e => this.loadCampaign(e.target.value),
+      saveCampaign: () => this.saveCampaign(),
+      deleteCampaign: () => this.deleteCampaign(),
+      exportCampaign: () => this.exportCampaign(),
+      importCampaign: () => { if (this._importInput) this._importInput.click(); },
+      importRef: el => { this._importInput = el; },
+      onImportFile: e => { if (e.target.files && e.target.files[0]) this.importCampaign(e.target.files[0]); e.target.value = ''; },
       screens, tileCount: s.tiles,
       saveLabel: 'saved ' + (s.secs % 17) + 's ago',
       castStatus: (s.castOn || s.castFallback) ? 'casting the map to players' : 'nothing shared',
@@ -1284,9 +1414,22 @@ class Component extends DCLogic {
         pick: () => this.setState({ sel: c.id })
       })),
       nextTurn: () => this.next(),
+      addCombatant: () => this.addCombatant(),
 
       selName: sel.name, selMax: sel.max, selHp: sel.hp, selPct: pct(sel), selHpColor: col(sel),
-      selMeta: sel.pc ? 'player character \u00b7 ' + sel.badge : 'hostile \u00b7 ' + sel.badge + ' \u00b7 AC 15',
+      selInit: sel.init, selAc: sel.ac == null ? 10 : sel.ac, selBadge: sel.badge,
+      onSelName: e => this.editCombatant(sel.id, 'name', e.target.value),
+      onSelInit: e => this.editCombatant(sel.id, 'init', e.target.value),
+      onSelAc: e => this.editCombatant(sel.id, 'ac', e.target.value),
+      onSelMax: e => this.editCombatant(sel.id, 'max', e.target.value),
+      onSelBadge: e => this.editCombatant(sel.id, 'badge', e.target.value),
+      toggleSelPc: () => this.editCombatant(sel.id, 'pc', !sel.pc),
+      removeSel: () => this.removeCombatant(sel.id),
+      pcLabel: sel.pc ? 'PC' : 'Foe',
+      pcBtn: 'height: 22px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 600; border: 1px solid ' + (sel.pc ? '#274539' : '#452a26') + '; background: ' + (sel.pc ? '#14201b' : '#211514') + '; color: ' + (sel.pc ? '#74c3a7' : '#e08d7c') + ';',
+      numInput: 'width: 40px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; text-align: center; outline: none;',
+      txtInput: 'flex: 1; min-width: 0; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; padding: 0 5px; outline: none;',
+      selMeta: (sel.pc ? 'player character \u00b7 ' + sel.badge : 'hostile \u00b7 ' + sel.badge) + ' \u00b7 AC ' + (sel.ac == null ? 10 : sel.ac),
       selTagLabel: sel.hp === 0 ? 'down' : sel.conds.length ? sel.conds.join(' \u00b7 ') : sel.hp <= sel.max / 2 ? 'bloodied' : 'steady',
       selTag: 'padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 600; background: ' + (sel.hp <= sel.max / 2 ? '#211514' : '#191f26') + '; color: ' + (sel.hp <= sel.max / 2 ? '#e08d7c' : '#8b95a3') + ';',
       dmg1: () => this.hp(sel.id, -1), dmg5: () => this.hp(sel.id, -5),
