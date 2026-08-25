@@ -454,6 +454,20 @@ const LOOT = ['A brass key, cold to the touch', '37 sp and a pawn ticket', 'Vial
 const ENC = ['Three bandits arguing over a corpse', 'A shrine swept clean this morning', 'Cart wheel, blood on the axle', 'A pilgrim who won\u2019t give a name'];
 const CONDS = ['Prone', 'Frightened', 'Restrained', 'Blinded', 'Blessed'];
 const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', '2d6', 'd100'];
+const SCREENS = [
+  { name: 'The Vell Road', key: 'v' },
+  { name: 'Shrine ambush (live)', key: 'a' },
+  { name: 'The Drowned Bell', key: 'b' },
+  { name: 'Tower approach', key: 't' },
+  { name: 'Campaign PDF (page)', key: 'p' },
+  { name: 'Party & downtime', key: 'y' }
+];
+const PREFABS = [
+  { name: 'Roadside Ambush', count: '5 tiles' },
+  { name: 'Merv’s Magic Shop', count: '4 tiles' },
+  { name: 'Any Tavern', count: '6 tiles' },
+  { name: 'The Citadel', count: '9 tiles' }
+];
 
 class Component extends DCLogic {
   state = {
@@ -675,23 +689,38 @@ class Component extends DCLogic {
     this.setState(s => ({ log: [...s.log, { t, text }].slice(-40) }));
   }
 
+  // The command palette searches the real app, not a canned list: every rule,
+  // every screen, every prefab, and every combatant on the board.
+  searchIndex() {
+    const s = this.state;
+    const out = RULES.filter(r => r.kind === 'rule');
+    for (const x of SCREENS) out.push({ kind: 'screen', title: x.name, sub: 'screen · hotkey ' + x.key, _screen: x.key });
+    for (const p of PREFABS) out.push({ kind: 'tile', title: p.name, sub: 'prefab · ' + p.count, _prefab: p });
+    for (const c of s.combatants) out.push({ kind: 'monster', title: c.name, sub: (c.pc ? 'player character · ' + c.badge : 'hostile · ' + c.badge) + ' · ' + c.hp + '/' + c.max + ' hp', _id: c.id });
+    return out;
+  }
   paletteHits() {
     const q = this.state.query.trim().toLowerCase();
-    return RULES.filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
+    return this.searchIndex().filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
   }
 
   openResult(r) {
-    const books = ['Core Rules', 'Bestiary', 'Region Gazetteer'];
-    const i = RULES.indexOf(r);
     const t = this.clockShort();
-    // One setState with every change (excerpt, tab, close, log). This runtime
-    // renders from the first setState of a tick, so a follow-up logIt() would be
-    // dropped — the app's other actions (next/hp) also fold their log in here.
-    this.setState(s => ({
-      ...(r.kind === 'rule' ? { excerpt: i, book: Math.max(0, books.indexOf(r.book)) } : {}),
-      paletteOpen: false,
-      log: [...s.log, { t, text: 'Opened “' + r.title + '” in a tile' }].slice(-40)
-    }));
+    // One setState with every change (this runtime renders from the first
+    // setState of a tick, so a follow-up logIt() would be dropped).
+    if (r.kind === 'rule') {
+      const books = ['Core Rules', 'Bestiary', 'Region Gazetteer'];
+      const i = RULES.indexOf(r);
+      this.setState(s => ({ excerpt: i, book: Math.max(0, books.indexOf(r.book)), paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in a tile' }].slice(-40) }));
+    } else if (r.kind === 'screen') {
+      this.setState(s => ({ screen: r._screen, paletteOpen: false, log: [...s.log, { t, text: 'Switched to screen “' + r.title + '”' }].slice(-40) }));
+    } else if (r.kind === 'tile') {
+      this.setState(s => ({ tiles: s.tiles + parseInt(r._prefab.count, 10), paletteOpen: false, log: [...s.log, { t, text: 'Dropped prefab “' + r.title + '”' }].slice(-40) }));
+    } else if (r.kind === 'monster') {
+      this.setState(s => ({ sel: r._id, paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in the statblock' }].slice(-40) }));
+    } else {
+      this.setState({ paletteOpen: false });
+    }
   }
 
   onPaletteKey(e) {
@@ -756,14 +785,7 @@ class Component extends DCLogic {
     const tabBtn = on => 'flex: 1; background: ' + (on ? '#14181d' : 'transparent') + '; border: 0; border-bottom: 2px solid ' + (on ? '#8f7ad6' : 'transparent') + '; color: ' + (on ? '#e6e9ee' : '#6f7987') + '; font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer;';
     const modeBtn = on => 'padding: 3px 12px; border: 0; border-radius: 6px; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#6f7987') + '; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer;';
 
-    const screens = [
-      { name: 'The Vell Road', key: 'v' },
-      { name: 'Shrine ambush (live)', key: 'a' },
-      { name: 'The Drowned Bell', key: 'b' },
-      { name: 'Tower approach', key: 't' },
-      { name: 'Campaign PDF (page)', key: 'p' },
-      { name: 'Party & downtime', key: 'y' }
-    ].filter(x => x.name.toLowerCase().includes(s.navQuery.toLowerCase())).map(x => {
+    const screens = SCREENS.filter(x => x.name.toLowerCase().includes(s.navQuery.toLowerCase())).map(x => {
       const active = x.key === s.screen;
       return {
         ...x, key: x.key,
@@ -776,13 +798,15 @@ class Component extends DCLogic {
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
-    const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (k === 'rule' ? '#22192e' : k === 'screen' ? '#132420' : '#241f13') + '; color: ' + (k === 'rule' ? '#c4b2ff' : k === 'screen' ? '#74c3a7' : '#d0b25a') + ';';
+    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514' };
+    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c' };
+    const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (kindBg[k] || '#241f13') + '; color: ' + (kindFg[k] || '#d0b25a') + ';';
 
     const excerpt = RULES[s.excerpt];
     const books = ['Core Rules', 'Bestiary', 'Region Gazetteer'];
 
     return {
-      isPrep, round: s.round, castOn: s.castOn, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
+      isPrep, round: s.round, castOn: s.castOn, castFallback: s.castFallback, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
       clock: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s.secs % 60).padStart(2, '0'),
       modeLabel: isPrep ? 'Prep' : 'Running',
       liveDot: isPrep ? '#d0b25a' : '#4fa88b',
@@ -804,12 +828,7 @@ class Component extends DCLogic {
       castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + ((s.castOn || s.castFallback) ? '#6d5bb5' : '#2b333d') + '; background: ' + ((s.castOn || s.castFallback) ? '#2c2140' : '#171c22') + '; color: ' + ((s.castOn || s.castFallback) ? '#c4b2ff' : '#c3cad4') + ';',
       toggleCast: () => this.toggleCast(),
 
-      prefabs: [
-        { name: 'Roadside Ambush', count: '5 tiles' },
-        { name: 'Merv\u2019s Magic Shop', count: '4 tiles' },
-        { name: 'Any Tavern', count: '6 tiles' },
-        { name: 'The Citadel', count: '9 tiles' }
-      ].map(p => ({ ...p, drop: () => { this.setState(x => ({ tiles: x.tiles + parseInt(p.count, 10) })); this.logIt('Dropped prefab \u201c' + p.name + '\u201d'); } })),
+      prefabs: PREFABS.map(p => ({ ...p, drop: () => { this.setState(x => ({ tiles: x.tiles + parseInt(p.count, 10) })); this.logIt('Dropped prefab \u201c' + p.name + '\u201d'); } })),
 
       sounds: s.sounds.map((x, i) => ({
         name: x.name, level: x.level,
