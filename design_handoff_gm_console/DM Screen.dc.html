@@ -142,7 +142,7 @@
 
       <div style="margin: 10px; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
         <div style="display: flex; justify-content: space-between; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
-          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene. Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. The count shows how many layers are live.">?</span></span><span>{{ mixLabel }}</span>
+          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene — it actually plays (synthesized in the browser). Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. Sound starts on your first click on the page. The count shows how many layers are live.">?</span></span><span>{{ mixLabel }}</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 7px;">
           <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="4">
@@ -466,7 +466,7 @@ class Component extends DCLogic {
   state = {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
-    pi: 0, tool: 'dice', sel: 'c1', tiles: 5,
+    pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a',
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -513,8 +513,82 @@ class Component extends DCLogic {
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
     if (document.body) this._drag(document.body);
+    // Browsers block audio until the first user gesture, so start (or resume)
+    // the soundscape on the first click/key anywhere — that makes the layers
+    // seeded "on" begin playing without the user having to touch the mixer.
+    this._resumeAudio = () => this.syncAudio();
+    document.addEventListener('pointerdown', this._resumeAudio);
+    document.addEventListener('keydown', this._resumeAudio);
   }
-  componentWillUnmount() { clearInterval(this._t); document.removeEventListener('keydown', this._key); }
+  componentWillUnmount() {
+    clearInterval(this._t);
+    document.removeEventListener('keydown', this._key);
+    document.removeEventListener('pointerdown', this._resumeAudio);
+    document.removeEventListener('keydown', this._resumeAudio);
+    if (this._audio) { try { this._audio.ctx.close(); } catch (e) {} this._audio = null; }
+  }
+
+  /* --- Soundscape audio engine ---------------------------------------------
+     No audio files ship with the prototype, so each layer is a small piece of
+     procedural ambience built with the Web Audio API: filtered noise and a low
+     drone. Volume follows each slider; the toggle mutes/unmutes. */
+  ensureAudio() {
+    if (this._audio) return this._audio;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    const ctx = new AC();
+    const master = ctx.createGain();
+    master.gain.value = 0.6;
+    master.connect(ctx.destination);
+    const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const layers = this.state.sounds.map((_, i) => this.makeLayer(ctx, master, noise, i));
+    this._audio = { ctx, master, layers };
+    return this._audio;
+  }
+  makeLayer(ctx, master, noiseBuf, i) {
+    const out = ctx.createGain();
+    out.gain.value = 0;
+    out.connect(master);
+    const start = n => { try { n.start(); } catch (e) {} };
+    if (i === 3) {
+      // Low drone — a couple of detuned low tones.
+      const dg = ctx.createGain(); dg.gain.value = 0.5; dg.connect(out);
+      [55, 55.4, 110].forEach((f, k) => {
+        const o = ctx.createOscillator();
+        o.type = k === 2 ? 'triangle' : 'sine';
+        o.frequency.value = f;
+        o.connect(dg); start(o);
+      });
+    } else {
+      const src = ctx.createBufferSource();
+      src.buffer = noiseBuf; src.loop = true;
+      if (i === 0) {                 // Rain, light — bright hiss.
+        const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1400;
+        src.connect(f); f.connect(out);
+      } else if (i === 1) {          // Crows — mid band with a warble.
+        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 1.4;
+        const trem = ctx.createGain(); trem.gain.value = 0.65;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 5.5;
+        const lg = ctx.createGain(); lg.gain.value = 0.5;
+        lfo.connect(lg); lg.connect(trem.gain); start(lfo);
+        src.connect(f); f.connect(trem); trem.connect(out);
+      } else {                       // Campfire — low, filtered rumble.
+        const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 620;
+        src.connect(f); f.connect(out);
+      }
+      start(src);
+    }
+    const scale = [0.5, 0.28, 0.6, 0.5][i];
+    return { set: (on, level) => out.gain.setTargetAtTime(on ? (level / 100) * scale : 0, ctx.currentTime, 0.05) };
+  }
+  syncAudio() {
+    const a = this.ensureAudio();
+    if (!a) return;
+    if (a.ctx.state === 'suspended') a.ctx.resume();
+    this.state.sounds.forEach((s, i) => a.layers[i] && a.layers[i].set(s.on, s.level));
+  }
   componentDidUpdate() { if (this.pal && document.activeElement !== this.pal) this.pal.focus(); }
 
   _drag(root) {
@@ -629,17 +703,21 @@ class Component extends DCLogic {
     const modeBtn = on => 'padding: 3px 12px; border: 0; border-radius: 6px; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#6f7987') + '; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer;';
 
     const screens = [
-      { name: 'The Vell Road', key: 'v', audio: false },
-      { name: 'Shrine ambush (live)', key: 'a', audio: true },
-      { name: 'The Drowned Bell', key: 'b', audio: false },
-      { name: 'Tower approach', key: 't', audio: false },
-      { name: 'Campaign PDF (page)', key: 'p', audio: false },
-      { name: 'Party & downtime', key: 'y', audio: false }
-    ].filter(x => x.name.toLowerCase().includes(s.navQuery.toLowerCase())).map((x, i) => ({
-      ...x, key: x.key,
-      style: 'display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: ' + (x.key === 'a' ? '#1c1730' : 'transparent') + '; border: 0; border-left: 2px solid ' + (x.key === 'a' ? '#8f7ad6' : 'transparent') + '; border-radius: 5px; color: ' + (x.key === 'a' ? '#e6e9ee' : '#a7b0bc') + '; font-family: inherit; font-size: 12px; cursor: pointer;',
-      pick: () => this.logIt('Switched to screen \u201c' + x.name + '\u201d')
-    }));
+      { name: 'The Vell Road', key: 'v' },
+      { name: 'Shrine ambush (live)', key: 'a' },
+      { name: 'The Drowned Bell', key: 'b' },
+      { name: 'Tower approach', key: 't' },
+      { name: 'Campaign PDF (page)', key: 'p' },
+      { name: 'Party & downtime', key: 'y' }
+    ].filter(x => x.name.toLowerCase().includes(s.navQuery.toLowerCase())).map(x => {
+      const active = x.key === s.screen;
+      return {
+        ...x, key: x.key,
+        audio: active && s.sounds.some(y => y.on),
+        style: 'display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: ' + (active ? '#1c1730' : 'transparent') + '; border: 0; border-left: 2px solid ' + (active ? '#8f7ad6' : 'transparent') + '; border-radius: 5px; color: ' + (active ? '#e6e9ee' : '#a7b0bc') + '; font-family: inherit; font-size: 12px; cursor: pointer;',
+        pick: () => { if (this.state.screen === x.key) return; this.setState({ screen: x.key }); this.logIt('Switched to screen \u201c' + x.name + '\u201d'); }
+      };
+    });
 
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
@@ -683,8 +761,8 @@ class Component extends DCLogic {
         name: x.name, level: x.level,
         dot: 'width: 8px; height: 8px; padding: 0; border-radius: 50%; border: 1px solid ' + (x.on ? '#4fa88b' : '#3a434e') + '; background: ' + (x.on ? '#4fa88b' : 'transparent') + '; cursor: pointer;' + (x.on ? ' animation: om-pulse 2.6s infinite;' : ''),
         label: 'flex: 1; font-size: 11px; color: ' + (x.on ? '#c3cad4' : '#6f7987') + ';',
-        toggle: () => this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, on: !y.on } : y) })),
-        set: e => { const v = +e.target.value; this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, level: v, on: v > 0 } : y) })); }
+        toggle: () => { this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, on: !y.on } : y) })); this.syncAudio(); },
+        set: e => { const v = +e.target.value; this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, level: v, on: v > 0 } : y) })); this.syncAudio(); }
       })),
       mixLabel: s.sounds.filter(x => x.on).length + ' layers',
 
