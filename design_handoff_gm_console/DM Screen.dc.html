@@ -238,7 +238,7 @@
       <input ref="{{ addRef }}" type="file" accept="audio/*" multiple onChange="{{ onAddFiles }}" style="display: none;">
     </aside>
 
-    <button onClick="{{ toggleLeft }}" title="Show or hide the left panel (screens, prefabs, music)" style="background: #12161b; border: 0; border-right: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ leftChevron }}</button>
+    <button onClick="{{ toggleLeft }}" title="Show or hide the left panel — screens, prefabs, music (shortcut: [ )" style="background: #12161b; border: 0; border-right: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ leftChevron }}</button>
 
     <main ref="{{ canvasRef }}" style="position: relative; overflow: auto; background-color: #0d1013; background-image: linear-gradient(#161b22 1px, transparent 1px), linear-gradient(90deg, #161b22 1px, transparent 1px); background-size: 28px 28px;">
 
@@ -503,7 +503,7 @@
       </div>
     </main>
 
-    <button onClick="{{ toggleRight }}" title="Show or hide the right panel (initiative, party, log)" style="background: #12161b; border: 0; border-left: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ rightChevron }}</button>
+    <button onClick="{{ toggleRight }}" title="Show or hide the right panel — initiative, party, log (shortcut: ] )" style="background: #12161b; border: 0; border-left: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ rightChevron }}</button>
 
     <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px;">
@@ -743,6 +743,8 @@ class Component extends DCLogic {
       if (e.key === 'Escape') this.setState({ paletteOpen: false });
       else if (e.key === 'Enter' && !typing) this.next();
       else if ((e.key === 'm' || e.key === 'M') && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.toggleMute(); }
+      else if (e.key === '[' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.togglePanel('left'); }
+      else if (e.key === ']' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.togglePanel('right'); }
     };
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
@@ -753,6 +755,7 @@ class Component extends DCLogic {
     this.loadCatOverrides();
     this.loadLayouts();
     this.loadCampaignList();
+    this.loadPanels();
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
@@ -953,6 +956,18 @@ class Component extends DCLogic {
     if (this.music) this.music.muted = this.state.muted;
     this.syncLayers();
     this.logIt(this.state.muted ? 'Muted all sound' : 'Unmuted sound');
+  }
+
+  /* --- Collapsible side panels (state remembered on this device) ------------ */
+  togglePanel(side) {
+    this.setState(s => side === 'left' ? { leftOpen: !s.leftOpen } : { rightOpen: !s.rightOpen });
+    this.persistPanels();
+  }
+  loadPanels() {
+    try { const p = JSON.parse(localStorage.getItem('dmscreen.panels') || 'null'); if (p) this.setState({ leftOpen: p.leftOpen !== false, rightOpen: p.rightOpen !== false }); } catch (e) {}
+  }
+  persistPanels() {
+    try { localStorage.setItem('dmscreen.panels', JSON.stringify({ leftOpen: this.state.leftOpen, rightOpen: this.state.rightOpen })); } catch (e) {}
   }
 
   /* --- Scene notes (editable, saved on this device) ------------------------- */
@@ -1512,8 +1527,8 @@ class Component extends DCLogic {
       leftOpen: s.leftOpen, rightOpen: s.rightOpen,
       gridCols: (s.leftOpen ? '236px' : '0px') + ' 18px 1fr 18px ' + (s.rightOpen ? '306px' : '0px'),
       leftChevron: s.leftOpen ? '‹' : '›', rightChevron: s.rightOpen ? '›' : '‹',
-      toggleLeft: () => this.setState(st => ({ leftOpen: !st.leftOpen })),
-      toggleRight: () => this.setState(st => ({ rightOpen: !st.rightOpen })),
+      toggleLeft: () => this.togglePanel('left'),
+      toggleRight: () => this.togglePanel('right'),
       clock: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s.secs % 60).padStart(2, '0'),
       modeLabel: isPrep ? 'Prep' : 'Running',
       liveDot: isPrep ? '#d0b25a' : '#4fa88b',
