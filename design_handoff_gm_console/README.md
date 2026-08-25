@@ -49,11 +49,14 @@ font size, and radius in this README is taken from the prototype and should be m
 The interactions described under "Interactions & Behavior" are all implemented and working
 in the prototype — click through it before building.
 
-Two deliberate stand-ins, both flagged inline in the prototype:
-- The battle map is an abstract CSS composition (radial gradients + a grid overlay), not
-  real map art. In production this is an image/VTT surface. The **tokens on top of it are
-  real** and data-driven.
-- PDF tiles render excerpt text, not an actual PDF renderer.
+The original stand-ins have since been made real:
+- The battle map is a **live Hexwright-generated world**, embedded from
+  `rayzold.github.io/hexwright/?embed=1` (same-origin iframe) as a backdrop, with the
+  data-driven combat **tokens on top**.
+- The rulebook keeps its curated excerpts (driven by the command palette) **and** can open
+  and render an **actual PDF** you load, via a vendored PDF.js — read locally, nothing uploaded.
+- Audio is real: a **music player** and a **soundscape** of looping layers, both drawn from a
+  folder of your own tracks (File System Access API, remembered across sessions).
 
 ## Screens / Views
 

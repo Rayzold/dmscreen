@@ -23,6 +23,7 @@
   };
 </script>
 <link rel="stylesheet" href="./vendor/fonts/fonts.css">
+<script src="./vendor/pdf.min.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -127,7 +128,7 @@
         </sc-for>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 5px; padding: 14px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Prefabs<span class="help" title="Reusable tile bundles. Drop one to add its whole set of tiles (a shop, a tavern, an ambush) onto the current screen in a single click — the count shows how many tiles it brings.">?</span></div>
+      <div style="display: flex; align-items: center; gap: 5px; padding: 14px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Prefabs<span class="help" title="Reusable tile bundles. Drop one to place a real, movable tile on the canvas (drag its header to position it; ✕ to remove) — the count shows how many tiles the bundle represents.">?</span></div>
       <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 4px;">
         <sc-for list="{{ prefabs }}" as="p" hint-placeholder-count="4">
           <button onClick="{{ p.drop }}" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #161b21; border: 1px solid #232a33; border-radius: 7px; color: #c3cad4; font-family: inherit; font-size: 12px; cursor: pointer; text-align: left;" style-hover="border-color: #4a3f6b; color: #e6e9ee;">
@@ -300,15 +301,31 @@
             <sc-for list="{{ books }}" as="b" hint-placeholder-count="3">
               <button onClick="{{ b.pick }}" style="{{ b.style }}">{{ b.name }}</button>
             </sc-for>
+            <button onClick="{{ openPdf }}" style="flex: none; padding: 0 10px; border: 0; border-left: 1px solid #232a33; background: #171c22; color: #8f7ad6; font-family: inherit; font-size: 11px; cursor: pointer;" title="Open a real PDF rulebook (rendered here, read locally)">PDF</button>
           </div>
-          <div style="padding: 13px 14px; overflow: auto; flex: 1; font-family: 'Crimson Pro', Georgia, serif;">
-            <div style="display: flex; justify-content: space-between; color: #6f7987; font-family: 'Space Grotesk', sans-serif; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;">
-              <span style="display: flex; align-items: center; gap: 5px;">{{ bookName }}<span class="help" title="Rules reference across your loaded PDFs, split into books by the tabs above. Open a hit from the command palette (⌘K) and it lands here on the matching book and page — no digging through the PDF.">?</span></span><span>p. {{ bookPage }}</span>
+          <sc-if value="{{ pdfClosed }}" hint-placeholder-val="{{ true }}">
+            <div style="padding: 13px 14px; overflow: auto; flex: 1; font-family: 'Crimson Pro', Georgia, serif;">
+              <div style="display: flex; justify-content: space-between; color: #6f7987; font-family: 'Space Grotesk', sans-serif; font-size: 10px; letter-spacing: .06em; text-transform: uppercase;">
+                <span style="display: flex; align-items: center; gap: 5px;">{{ bookName }}<span class="help" title="Curated rules by book (tabs above), driven by the command palette (⌘K). For your own books, click PDF to open and read an actual PDF here — it's rendered locally, nothing uploaded.">?</span></span><span>p. {{ bookPage }}</span>
+              </div>
+              <div style="margin-top: 8px; font-size: 17px; font-weight: 600;">{{ excerptTitle }}</div>
+              <div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #c3cad4;">{{ excerptBody }}</div>
+              <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #232a33; font-size: 14px; line-height: 1.5; color: #8b95a3;">{{ excerptTail }}</div>
             </div>
-            <div style="margin-top: 8px; font-size: 17px; font-weight: 600;">{{ excerptTitle }}</div>
-            <div style="margin-top: 6px; font-size: 15px; line-height: 1.5; color: #c3cad4;">{{ excerptBody }}</div>
-            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #232a33; font-size: 14px; line-height: 1.5; color: #8b95a3;">{{ excerptTail }}</div>
-          </div>
+          </sc-if>
+          <sc-if value="{{ pdfOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid #232a33; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: #8b95a3; flex: none;">
+              <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ pdfName }}">{{ pdfName }}</span>
+              <button onClick="{{ pdfPrev }}" style="width: 22px; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;" title="Previous page">◂</button>
+              <span style="font-variant-numeric: tabular-nums;">{{ pdfPageLabel }}</span>
+              <button onClick="{{ pdfNext }}" style="width: 22px; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;" title="Next page">▸</button>
+              <button onClick="{{ closePdf }}" style="width: 22px; height: 22px; background: none; border: 1px solid #2b333d; border-radius: 5px; color: #6f7987; font-family: inherit; cursor: pointer;" title="Close PDF, back to the rules">✕</button>
+            </div>
+            <div style="padding: 8px; overflow: auto; flex: 1; display: flex; justify-content: center; background: #0d1013;">
+              <canvas ref="{{ pdfCanvasRef }}" style="max-width: 100%; height: fit-content; border-radius: 4px;"></canvas>
+            </div>
+          </sc-if>
+          <input ref="{{ pdfInputRef }}" type="file" accept="application/pdf,.pdf" onChange="{{ onPdfFile }}" style="display: none;">
         </section>
 
         <section data-tile="notes" style="position: absolute; left: 392px; top: 442px; width: 268px; height: 336px; background: #14181d; border: 1px solid #262d36; border-radius: 11px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; flex-direction: column;">
@@ -320,17 +337,19 @@
             <span style="color: #5f6875; font-size: 10px;">saved</span>
           </div>
           <div style="padding: 12px; overflow: auto; flex: 1; font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; line-height: 1.5;">
-            <div style="font-weight: 600; font-size: 16px;">They took the shrine road</div>
-            <div style="color: #8b95a3; margin-top: 3px;">Nobody prepped this. Improvise from the bandit table.</div>
+            <input value="{{ noteTitle }}" onChange="{{ onNoteTitle }}" placeholder="Scene title…" style="width: 100%; font-family: inherit; font-weight: 600; font-size: 16px; background: none; border: 0; color: #e6e9ee; outline: none; padding: 0;">
+            <input value="{{ noteBody }}" onChange="{{ onNoteBody }}" placeholder="A line of context…" style="width: 100%; margin-top: 3px; font-family: inherit; font-size: 15px; background: none; border: 0; color: #8b95a3; outline: none; padding: 0;">
             <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
               <sc-for list="{{ beats }}" as="b" hint-placeholder-count="4">
-                <button onClick="{{ b.toggle }}" style="display: flex; align-items: flex-start; gap: 7px; background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;">
-                  <span style="{{ b.box }}">{{ b.mark }}</span>
-                  <span style="{{ b.text }}">{{ b.name }}</span>
-                </button>
+                <div style="display: flex; align-items: center; gap: 7px;">
+                  <button onClick="{{ b.toggle }}" style="{{ b.box }}" title="Toggle done">{{ b.mark }}</button>
+                  <input value="{{ b.name }}" onChange="{{ b.edit }}" placeholder="New beat…" style="{{ b.inputStyle }}">
+                  <button onClick="{{ b.remove }}" style="flex: none; width: 16px; height: 16px; background: none; border: 0; color: #56606d; font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer;" title="Remove beat">✕</button>
+                </div>
               </sc-for>
             </div>
-            <div style="margin-top: 12px; color: #56606d; font-family: 'Space Grotesk', sans-serif; font-size: 11px;">Type / for a table, roll, or callout</div>
+            <button onClick="{{ addBeat }}" style="margin-top: 8px; background: none; border: 0; color: #8f7ad6; font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;">＋ add beat</button>
+            <div style="margin-top: 10px; color: #56606d; font-family: 'Space Grotesk', sans-serif; font-size: 11px;">Click any line to edit · saved on this device</div>
           </div>
         </section>
 
@@ -380,6 +399,18 @@
             </div>
           </sc-if>
         </section>
+
+        <sc-for list="{{ extraTiles }}" as="t" hint-placeholder-count="0">
+          <section data-tile="{{ t.id }}" style="{{ t.style }}">
+            <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
+              <span style="color: #8f7ad6; font-size: 11px;">◧</span>
+              <span style="font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ t.name }}</span>
+              <span style="color: #5f6875; font-size: 10px;">{{ t.count }}</span>
+              <button onClick="{{ t.close }}" style="background: none; border: 0; color: #6f7987; font-size: 13px; cursor: pointer; padding: 0;" title="Remove tile">✕</button>
+            </div>
+            <div style="flex: 1; padding: 12px; color: #6f7987; font-family: 'Crimson Pro', Georgia, serif; font-size: 14px; line-height: 1.5;">Prefab dropped. Drag the header to place it, then swap in a map, statblock, or notes.</div>
+          </section>
+        </sc-for>
       </div>
     </main>
 
@@ -568,6 +599,8 @@ class Component extends DCLogic {
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false,
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70,
     presets: [], preset: '', layerSeq: 3,
+    noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
+    extraTiles: [], tileSeq: 1, pdf: null,
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -618,6 +651,7 @@ class Component extends DCLogic {
     if (document.body) this._drag(document.body);
     this._layerAudio = {};          // id -> HTMLAudioElement for soundscape layers
     this.loadPresets();
+    this.loadNotes();
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
@@ -812,6 +846,70 @@ class Component extends DCLogic {
     this.logIt(this.state.muted ? 'Muted all sound' : 'Unmuted sound');
   }
 
+  /* --- Scene notes (editable, saved on this device) ------------------------- */
+  loadNotes() {
+    try {
+      const n = JSON.parse(localStorage.getItem('dmscreen.notes') || 'null');
+      if (n) this.setState({ noteTitle: n.title ?? this.state.noteTitle, noteBody: n.body ?? this.state.noteBody, beats: Array.isArray(n.beats) ? n.beats : this.state.beats });
+    } catch (e) {}
+  }
+  persistNotes() {
+    try { localStorage.setItem('dmscreen.notes', JSON.stringify({ title: this.state.noteTitle, body: this.state.noteBody, beats: this.state.beats })); } catch (e) {}
+  }
+  onNoteTitle(v) { this.setState({ noteTitle: v }); this.persistNotes(); }
+  onNoteBody(v) { this.setState({ noteBody: v }); this.persistNotes(); }
+  editBeat(i, v) { this.setState(s => ({ beats: s.beats.map((b, j) => j === i ? { ...b, name: v } : b) })); this.persistNotes(); }
+  toggleBeat(i) { this.setState(s => ({ beats: s.beats.map((b, j) => j === i ? { ...b, done: !b.done } : b) })); this.persistNotes(); }
+  removeBeat(i) { this.setState(s => ({ beats: s.beats.filter((b, j) => j !== i) })); this.persistNotes(); }
+  addBeat() { this.setState(s => ({ beats: [...s.beats, { name: '', done: false }] })); this.persistNotes(); }
+
+  /* --- Prefab tiles: dropping a prefab adds a real, movable tile ------------ */
+  dropPrefab(p) {
+    const n = this.state.extraTiles.length;
+    const id = 'T' + this.state.tileSeq;
+    this.setState(s => ({
+      tileSeq: s.tileSeq + 1,
+      tiles: s.tiles + parseInt(p.count, 10),
+      extraTiles: [...s.extraTiles, { id, name: p.name, count: p.count, x: 300 + (n % 5) * 26, y: 210 + (n % 5) * 26 }]
+    }));
+    this.logIt('Dropped prefab “' + p.name + '” (' + p.count + ')');
+  }
+  closeTile(id) { this.setState(s => ({ extraTiles: s.extraTiles.filter(t => t.id !== id) })); }
+
+  /* --- Rulebook: render a real PDF the user loads (via pdf.js) --------------- */
+  loadPdfFile(file) {
+    if (!file || !window.pdfjsLib) return;
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
+    const url = URL.createObjectURL(file);
+    window.pdfjsLib.getDocument(url).promise.then(doc => {
+      this._pdfDoc = doc;
+      this.setState({ pdf: { name: file.name.replace(/\.[^.]+$/, ''), numPages: doc.numPages, page: 1 } });
+      this.logIt('Opened PDF “' + file.name + '”');
+      this.renderPdfPage(1);
+    }).catch(e => { console.error(e); this.logIt('Could not open that PDF'); });
+  }
+  renderPdfPage(n) {
+    const doc = this._pdfDoc, cv = this.pdfCanvas;
+    if (!doc || !cv) return;
+    doc.getPage(n).then(page => {
+      const base = page.getViewport({ scale: 1 });
+      const scale = (cv.parentElement ? cv.parentElement.clientWidth - 4 : 320) / base.width;
+      const vp = page.getViewport({ scale: Math.max(0.2, scale) });
+      cv.width = vp.width; cv.height = vp.height;
+      const ctx = cv.getContext('2d');
+      if (this._pdfTask) { try { this._pdfTask.cancel(); } catch (e) {} }
+      this._pdfTask = page.render({ canvasContext: ctx, viewport: vp });
+    }).catch(() => {});
+  }
+  pdfStep(d) {
+    const p = this.state.pdf; if (!p) return;
+    const n = Math.max(1, Math.min(p.numPages, p.page + d));
+    if (n === p.page) return;
+    this.setState({ pdf: { ...p, page: n } });
+    this.renderPdfPage(n);
+  }
+  closePdf() { if (this._pdfDoc) { try { this._pdfDoc.destroy(); } catch (e) {} this._pdfDoc = null; } this.setState({ pdf: null }); }
+
   /* --- Player view: a real second window ------------------------------------
      "Show players" opens a genuine pop-up window casting the live map (a
      Hexwright embed) with the tokens on top — no hp, names, or notes. If the
@@ -917,7 +1015,8 @@ class Component extends DCLogic {
     } else if (r.kind === 'screen') {
       this.setState(s => ({ screen: r._screen, paletteOpen: false, log: [...s.log, { t, text: 'Switched to screen “' + r.title + '”' }].slice(-40) }));
     } else if (r.kind === 'tile') {
-      this.setState(s => ({ tiles: s.tiles + parseInt(r._prefab.count, 10), paletteOpen: false, log: [...s.log, { t, text: 'Dropped prefab “' + r.title + '”' }].slice(-40) }));
+      const p = r._prefab, n = this.state.extraTiles.length, id = 'T' + this.state.tileSeq;
+      this.setState(s => ({ paletteOpen: false, tileSeq: s.tileSeq + 1, tiles: s.tiles + parseInt(p.count, 10), extraTiles: [...s.extraTiles, { id, name: p.name, count: p.count, x: 300 + (n % 5) * 26, y: 210 + (n % 5) * 26 }], log: [...s.log, { t, text: 'Dropped prefab “' + p.name + '” (' + p.count + ')' }].slice(-40) }));
     } else if (r.kind === 'monster') {
       this.setState(s => ({ sel: r._id, paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in the statblock' }].slice(-40) }));
     } else {
@@ -1031,6 +1130,10 @@ class Component extends DCLogic {
       musicRef: el => { if (!el) return; this.music = el; el.onended = () => this.stepTrack(1); },
       addRef: el => { this._addInput = el; },
       onAddFiles: e => { this.addFiles(e.target.files); e.target.value = ''; },
+      pdfCanvasRef: el => { if (el) { this.pdfCanvas = el; if (this._pdfDoc && s.pdf) this.renderPdfPage(s.pdf.page); } },
+      pdfInputRef: el => { this._pdfInput = el; },
+      onPdfFile: e => { if (e.target.files && e.target.files[0]) this.loadPdfFile(e.target.files[0]); e.target.value = ''; },
+      openPdfPicker: () => { if (this._pdfInput) this._pdfInput.click(); },
       onQuery: e => this.setState({ query: e.target.value, pi: 0 }),
       onPaletteKey: e => this.onPaletteKey(e),
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
@@ -1041,7 +1144,12 @@ class Component extends DCLogic {
       castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + ((s.castOn || s.castFallback) ? '#6d5bb5' : '#2b333d') + '; background: ' + ((s.castOn || s.castFallback) ? '#2c2140' : '#171c22') + '; color: ' + ((s.castOn || s.castFallback) ? '#c4b2ff' : '#c3cad4') + ';',
       toggleCast: () => this.toggleCast(),
 
-      prefabs: PREFABS.map(p => ({ ...p, drop: () => { this.setState(x => ({ tiles: x.tiles + parseInt(p.count, 10) })); this.logIt('Dropped prefab \u201c' + p.name + '\u201d'); } })),
+      prefabs: PREFABS.map(p => ({ ...p, drop: () => this.dropPrefab(p) })),
+      extraTiles: s.extraTiles.map(t => ({
+        id: t.id, name: t.name, count: t.count,
+        style: 'position: absolute; left: ' + t.x + 'px; top: ' + t.y + 'px; width: 240px; height: 168px; background: #14181d; border: 1px solid #46375f; border-radius: 11px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; flex-direction: column; z-index: 5;',
+        close: () => this.closeTile(t.id)
+      })),
 
       // --- music library + player ---
       libStatus: s.libStatus,
@@ -1125,13 +1233,26 @@ class Component extends DCLogic {
       books: books.map((name, i) => ({ name, style: tabBtn(i === s.book), pick: () => this.setState({ book: i }) })),
       bookName: books[s.book], bookPage: excerpt.page || 22,
       excerptTitle: excerpt.title, excerptBody: excerpt.body, excerptTail: excerpt.tail,
+      pdfOpen: !!s.pdf, pdfClosed: !s.pdf,
+      pdfName: s.pdf ? s.pdf.name : '',
+      pdfPageLabel: s.pdf ? ('p. ' + s.pdf.page + ' / ' + s.pdf.numPages) : '',
+      openPdf: () => { if (this._pdfInput) this._pdfInput.click(); },
+      pdfPrev: () => this.pdfStep(-1),
+      pdfNext: () => this.pdfStep(1),
+      closePdf: () => this.closePdf(),
 
       beats: s.beats.map((b, i) => ({
         name: b.name, mark: b.done ? '\u2713' : '',
-        box: 'width: 14px; height: 14px; flex: none; margin-top: 3px; border-radius: 4px; display: grid; place-items: center; font-size: 9px; border: 1px solid ' + (b.done ? '#4fa88b' : '#3a434e') + '; background: ' + (b.done ? 'rgba(79,168,139,.15)' : 'transparent') + '; color: #4fa88b;',
-        text: 'color: ' + (b.done ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (b.done ? 'line-through' : 'none') + ';',
-        toggle: () => this.setState(st => ({ beats: st.beats.map((x, j) => j === i ? { ...x, done: !x.done } : x) }))
+        box: 'width: 14px; height: 14px; flex: none; padding: 0; border-radius: 4px; display: grid; place-items: center; font-size: 9px; cursor: pointer; border: 1px solid ' + (b.done ? '#4fa88b' : '#3a434e') + '; background: ' + (b.done ? 'rgba(79,168,139,.15)' : 'transparent') + '; color: #4fa88b;',
+        inputStyle: 'flex: 1; min-width: 0; font-family: inherit; font-size: 15px; background: none; border: 0; outline: none; padding: 0; color: ' + (b.done ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (b.done ? 'line-through' : 'none') + ';',
+        toggle: () => this.toggleBeat(i),
+        edit: e => this.editBeat(i, e.target.value),
+        remove: () => this.removeBeat(i)
       })),
+      noteTitle: s.noteTitle, noteBody: s.noteBody,
+      onNoteTitle: e => this.onNoteTitle(e.target.value),
+      onNoteBody: e => this.onNoteBody(e.target.value),
+      addBeat: () => this.addBeat(),
 
       onDice: s.tool === 'dice', onGen: s.tool === 'gen',
       diceTab: tabBtn(s.tool === 'dice'), genTab: tabBtn(s.tool === 'gen'),
