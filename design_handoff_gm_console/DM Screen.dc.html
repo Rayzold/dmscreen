@@ -314,11 +314,45 @@
                 <button onClick="{{ c.toggle }}" style="{{ c.style }}">{{ c.name }}</button>
               </sc-for>
             </div>
+            <sc-if value="{{ hasConds }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 7px; display: flex; flex-direction: column; gap: 4px;">
+                <sc-for list="{{ activeConds }}" as="c" hint-placeholder-count="1">
+                  <div style="display: flex; align-items: center; gap: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: #c4b2ff;">
+                    <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.name }}</span>
+                    <button onClick="{{ c.setInf }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; font-size: 10px; cursor: pointer;" title="No timer (indefinite)">∞</button>
+                    <button onClick="{{ c.less }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; cursor: pointer;">−</button>
+                    <span style="width: 20px; text-align: center; font-variant-numeric: tabular-nums;">{{ c.rounds }}</span>
+                    <button onClick="{{ c.more }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; cursor: pointer;">＋</button>
+                    <button onClick="{{ c.clear }}" style="width: 18px; height: 18px; background: none; border: 0; color: #56606d; font-family: inherit; font-size: 10px; cursor: pointer;" title="Clear condition">✕</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
 
-            <div style="margin-top: 13px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Actions</div>
-            <div style="margin-top: 5px; font-family: 'Crimson Pro', Georgia, serif; font-size: 14px; line-height: 1.45; color: #c3cad4;">
-              <div><strong style="font-style: italic;">Scimitar.</strong> +5 to hit, reach 5 ft. <em>Hit:</em> 6 (1d6+3) slashing.</div>
-              <div style="margin-top: 4px;"><strong style="font-style: italic;">Parry.</strong> +2 AC against one melee attack.</div>
+            <div style="margin-top: 13px; display: flex; align-items: center; gap: 6px;">
+              <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">Attacks</span>
+              <button onClick="{{ addAttack }}" style="background: none; border: 0; color: #8f7ad6; font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;" title="Add an attack">＋ add</button>
+            </div>
+            <div style="margin-top: 5px; display: flex; flex-direction: column; gap: 5px; font-family: 'Space Grotesk', sans-serif;">
+              <sc-for list="{{ selAttacks }}" as="a" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <button onClick="{{ a.roll }}" style="flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; height: 26px; padding: 0 8px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; cursor: pointer; text-align: left;" style-hover="background: #2c2140;" title="Roll to-hit and damage into the log">
+                    <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.name }}</span>
+                    <span style="color: #8b95a3; font-size: 10px;">{{ a.hitLabel }} · {{ a.dmg }}</span>
+                    <span style="font-size: 11px;">⚄</span>
+                  </button>
+                  <button onClick="{{ a.remove }}" style="flex: none; width: 20px; height: 26px; background: none; border: 0; color: #56606d; font-family: inherit; font-size: 11px; cursor: pointer;" title="Remove attack">✕</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+              <sc-for list="{{ selAttacks }}" as="a" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <input value="{{ a.name }}" onChange="{{ a.editName }}" placeholder="name" style="flex: 1; min-width: 0; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #c3cad4; font-family: 'Space Grotesk', sans-serif; font-size: 10px; padding: 0 5px; outline: none;">
+                  <input value="{{ a.hit }}" onChange="{{ a.editHit }}" type="number" title="to-hit bonus" style="{{ numInputS }}">
+                  <input value="{{ a.dmg }}" onChange="{{ a.editDmg }}" placeholder="1d6+3" title="damage dice" style="width: 62px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #c3cad4; font-family: 'Space Grotesk', sans-serif; font-size: 10px; padding: 0 5px; outline: none;">
+                </div>
+              </sc-for>
             </div>
           </div>
         </section>
@@ -445,27 +479,31 @@
     <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px;">
         <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
-        <span class="help" title="Turn order, highest initiative first. The active combatant is highlighted and its map token rings; click any row to select that combatant. 'Next' (or press ⏎) advances the turn and rolls the round over. Downed combatants dim and strike through.">?</span>
+        <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant is highlighted and its map token rings; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through.">?</span>
         <span style="flex: 1;"></span>
+        <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Sort the order by initiative (highest first)">↕</button>
         <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a combatant to the initiative">＋</button>
         <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
       </div>
 
       <div style="padding: 0 8px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
         <sc-for list="{{ order }}" as="c" hint-placeholder-count="8">
-          <button onClick="{{ c.pick }}" style="{{ c.row }}" style-hover="background: #1a1f26;">
-            <span style="{{ c.initBox }}">{{ c.init }}</span>
-            <span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0;">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                <span style="{{ c.nameStyle }}">{{ c.name }}</span>
-                <span style="color: #6f7987; font-size: 10px;">{{ c.badge }}</span>
+          <div draggable="true" onDragStart="{{ c.dragStart }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.row }}" style-hover="background: #1a1f26;">
+            <span style="color: #4a5361; cursor: grab; font-size: 11px; flex: none;" title="Drag to reorder">⠿</span>
+            <button onClick="{{ c.pick }}" style="display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-family: inherit; color: inherit;">
+              <span style="{{ c.initBox }}">{{ c.init }}</span>
+              <span style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0;">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                  <span style="{{ c.nameStyle }}">{{ c.name }}</span>
+                  <span style="color: #6f7987; font-size: 10px;">{{ c.badge }}</span>
+                </span>
+                <span style="height: 3px; background: #202730; border-radius: 2px; overflow: hidden;">
+                  <span style="display: block; height: 100%; width: {{ c.pct }}%; background: {{ c.color }}; transition: width .18s ease;"></span>
+                </span>
               </span>
-              <span style="height: 3px; background: #202730; border-radius: 2px; overflow: hidden;">
-                <span style="display: block; height: 100%; width: {{ c.pct }}%; background: {{ c.color }}; transition: width .18s ease;"></span>
-              </span>
-            </span>
-            <span style="color: #6f7987; font-size: 10px; font-variant-numeric: tabular-nums; width: 42px; text-align: right;">{{ c.hpLabel }}</span>
-          </button>
+              <span style="color: #6f7987; font-size: 10px; font-variant-numeric: tabular-nums; width: 42px; text-align: right;">{{ c.hpLabel }}</span>
+            </button>
+          </div>
         </sc-for>
       </div>
 
@@ -632,14 +670,14 @@ class Component extends DCLogic {
     extraTiles: [], tileSeq: 1, pdf: null, layouts: {},
     campaigns: {}, campaign: '',
     combatants: [
-      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, ac: 15, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
-      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, ac: 15, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
-      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, ac: 18, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [] },
-      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, ac: 12, pc: false, badge: 'archer', x: 70, y: 24, conds: [] },
-      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, ac: 12, pc: false, badge: 'archer', x: 78, y: 44, conds: ['Prone'] },
-      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, ac: 12, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [] },
-      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, ac: 13, pc: false, badge: 'pack', x: 66, y: 62, conds: [] },
-      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, ac: 16, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [] }
+      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, ac: 15, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [], attacks: [{ name: 'Longbow', hit: 7, dmg: '1d8+4' }, { name: 'Shortsword', hit: 6, dmg: '1d6+3' }] },
+      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, ac: 15, pc: false, badge: 'improvised', x: 54, y: 34, conds: [], attacks: [{ name: 'Scimitar', hit: 5, dmg: '1d6+3' }, { name: 'Dagger', hit: 5, dmg: '1d4+3' }] },
+      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, ac: 18, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [], attacks: [{ name: 'Greatsword', hit: 6, dmg: '2d6+4' }] },
+      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, ac: 12, pc: false, badge: 'archer', x: 70, y: 24, conds: [], attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
+      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, ac: 12, pc: false, badge: 'archer', x: 78, y: 44, conds: [{ name: 'Prone', rounds: null }], attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
+      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, ac: 12, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [], attacks: [{ name: 'Fire Bolt', hit: 5, dmg: '2d10' }, { name: 'Dagger', hit: 2, dmg: '1d4' }] },
+      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, ac: 13, pc: false, badge: 'pack', x: 66, y: 62, conds: [], attacks: [{ name: 'Bite', hit: 4, dmg: '2d4+2' }] },
+      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, ac: 16, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [], attacks: [{ name: 'Mace', hit: 5, dmg: '1d6+2' }, { name: 'Sacred Flame', hit: 0, dmg: '1d8' }] }
     ],
     sounds: [
       { id: 'L1', category: 'Travel', trackName: null, level: 55, on: false },
@@ -1185,12 +1223,16 @@ class Component extends DCLogic {
   clockShort() { const m = Math.floor(this.state.secs / 60); return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0'); }
 
   next() {
+    let wrapped = false;
     this.setState(s => {
+      if (!s.combatants.length) return {};
       const n = (s.turn + 1) % s.combatants.length;
       const round = n === 0 ? s.round + 1 : s.round;
+      wrapped = n === 0;
       const c = s.combatants[n];
       return { turn: n, round, sel: c.pc ? s.sel : c.id, log: [...s.log, { t: this.clockShort(), text: (n === 0 ? 'Round ' + round + ' \u2014 ' : '') + c.name + '\u2019s turn' }].slice(-40) };
     });
+    if (wrapped) this.tickConditions();   // count down timed conditions each new round
   }
 
   hp(id, d) {
@@ -1207,8 +1249,32 @@ class Component extends DCLogic {
 
   cond(name) {
     this.setState(s => ({
-      combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conds: c.conds.includes(name) ? c.conds.filter(x => x !== name) : [...c.conds, name] })
+      combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conds: c.conds.some(x => x.name === name) ? c.conds.filter(x => x.name !== name) : [...c.conds, { name, rounds: null }] })
     }));
+  }
+  // Set a condition's remaining rounds (null = indefinite). It counts down each
+  // new round and auto-removes at zero.
+  setCondRounds(name, rounds) {
+    this.setState(s => ({
+      combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conds: c.conds.map(x => x.name === name ? { ...x, rounds: rounds } : x) })
+    }));
+  }
+  tickConditions() {
+    this.setState(s => {
+      let ended = [];
+      const combatants = s.combatants.map(c => {
+        const kept = [];
+        for (const cd of c.conds) {
+          if (cd.rounds == null) { kept.push(cd); continue; }
+          const r = cd.rounds - 1;
+          if (r <= 0) ended.push(c.name + '’s ' + cd.name);
+          else kept.push({ ...cd, rounds: r });
+        }
+        return kept.length === c.conds.length && kept.every((k, i) => k === c.conds[i]) ? c : { ...c, conds: kept };
+      });
+      const log = ended.length ? [...s.log, { t: this.clockShort(), text: 'Ended: ' + ended.join(', ') }].slice(-40) : s.log;
+      return { combatants, log };
+    });
   }
 
   /* --- Editable combatants -------------------------------------------------- */
@@ -1225,17 +1291,72 @@ class Component extends DCLogic {
         else if (field === 'hp') nc.hp = Math.max(0, Math.min(c.max, parseInt(value, 10) || 0));
         return nc;
       });
-      let turn = s.turn;
-      if (field === 'init') { combatants = combatants.slice().sort((a, b) => b.init - a.init); const i = combatants.findIndex(c => c.id === activeId); turn = i < 0 ? 0 : i; }
-      return { combatants, turn };
+      return { combatants };   // order is manual now; use ↕ to sort by initiative
     });
   }
+  sortInit() {
+    this.setState(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const combatants = [...s.combatants].sort((a, b) => b.init - a.init);
+      const i = combatants.findIndex(c => c.id === activeId);
+      return { combatants, turn: i < 0 ? 0 : i };
+    });
+  }
+  reorderCombatant(fromId, toId) {
+    if (!fromId || fromId === toId) return;
+    this.setState(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const arr = [...s.combatants];
+      const from = arr.findIndex(c => c.id === fromId);
+      if (from < 0) return {};
+      const [moved] = arr.splice(from, 1);
+      const to = arr.findIndex(c => c.id === toId);
+      arr.splice(to < 0 ? arr.length : to, 0, moved);
+      const i = arr.findIndex(c => c.id === activeId);
+      return { combatants: arr, turn: i < 0 ? 0 : i };
+    });
+  }
+  rollAttack(atk) {
+    const sel = this.state.combatants.find(c => c.id === this.state.sel) || this.state.combatants[this.state.turn];
+    if (!sel) return;
+    const d20 = 1 + Math.floor(Math.random() * 20);
+    const crit = d20 === 20, fumble = d20 === 1;
+    const toHit = d20 + (atk.hit || 0);
+    const m = String(atk.dmg || '').match(/^(\d*)d(\d+)([+-]\d+)?$/i);
+    let dmgText = atk.dmg || '';
+    let dmgTotal = 0;
+    if (m) {
+      let n = parseInt(m[1] || '1', 10); const f = parseInt(m[2], 10); const bonus = parseInt(m[3] || '0', 10);
+      if (crit) n *= 2;
+      const parts = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * f));
+      dmgTotal = parts.reduce((a, b) => a + b, 0) + bonus;
+      dmgText = dmgTotal + ' (' + parts.join('+') + (bonus ? (bonus > 0 ? '+' + bonus : bonus) : '') + ')';
+    }
+    const hitStr = fumble ? 'to hit 1 — miss' : (crit ? 'CRIT' : 'to hit ' + toHit + ' (' + d20 + (atk.hit >= 0 ? '+' + atk.hit : atk.hit) + ')');
+    const text = sel.name + ' — ' + atk.name + ': ' + hitStr + (m && !fumble ? ', ' + dmgTotal + ' dmg' : '');
+    this.setState(s => ({
+      rolls: [{ die: atk.name, detail: (fumble ? 'nat 1' : 'd20 ' + toHit) + (m && !fumble ? ' · ' + dmgText : ''), total: fumble ? 1 : toHit, crit }, ...s.rolls].slice(0, 24),
+      log: [...s.log, { t: this.clockShort(), text, hot: crit }].slice(-40)
+    }));
+  }
+  addAttack() { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: [...(c.attacks || []), { name: 'Attack', hit: 4, dmg: '1d6' }] }) })); }
+  editAttack(i, field, value) {
+    this.setState(s => ({ combatants: s.combatants.map(c => {
+      if (c.id !== s.sel) return c;
+      const attacks = (c.attacks || []).map((a, j) => j !== i ? a : (field === 'name' ? { ...a, name: value } : field === 'hit' ? { ...a, hit: parseInt(value, 10) || 0 } : { ...a, dmg: value }));
+      return { ...c, attacks };
+    }) }));
+  }
+  removeAttack(i) { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: (c.attacks || []).filter((a, j) => j !== i) }) })); }
   addCombatant() {
     const id = 'x' + Date.now().toString(36);
     this.setState(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
-      const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [] };
-      const combatants = [...s.combatants, nc].sort((a, b) => b.init - a.init);
+      const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [], attacks: [{ name: 'Attack', hit: 4, dmg: '1d6' }] };
+      const combatants = [...s.combatants];
+      let idx = combatants.findIndex(c => c.init < nc.init);      // insert by initiative, keep manual order otherwise
+      if (idx < 0) idx = combatants.length;
+      combatants.splice(idx, 0, nc);
       const i = combatants.findIndex(c => c.id === activeId);
       return { combatants, turn: i < 0 ? 0 : i, sel: id };
     });
@@ -1411,10 +1532,14 @@ class Component extends DCLogic {
         row: 'display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 7px; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
         initBox: 'width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? '#2c2140' : '#191f26') + '; color: ' + (c.id === active.id ? '#c4b2ff' : '#8b95a3') + ';',
         nameStyle: 'font-size: 12.5px; font-weight: ' + (c.id === active.id ? 600 : 400) + '; color: ' + (c.hp === 0 ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (c.hp === 0 ? 'line-through' : 'none') + ';',
-        pick: () => this.setState({ sel: c.id })
+        pick: () => this.setState({ sel: c.id }),
+        dragStart: e => { this._dragId = c.id; if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', c.id); } catch (_) {} } },
+        dragOver: e => e.preventDefault(),
+        drop: e => { e.preventDefault(); this.reorderCombatant(this._dragId, c.id); this._dragId = null; }
       })),
       nextTurn: () => this.next(),
       addCombatant: () => this.addCombatant(),
+      sortInit: () => this.sortInit(),
 
       selName: sel.name, selMax: sel.max, selHp: sel.hp, selPct: pct(sel), selHpColor: col(sel),
       selInit: sel.init, selAc: sel.ac == null ? 10 : sel.ac, selBadge: sel.badge,
@@ -1430,14 +1555,35 @@ class Component extends DCLogic {
       numInput: 'width: 40px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; text-align: center; outline: none;',
       txtInput: 'flex: 1; min-width: 0; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; padding: 0 5px; outline: none;',
       selMeta: (sel.pc ? 'player character \u00b7 ' + sel.badge : 'hostile \u00b7 ' + sel.badge) + ' \u00b7 AC ' + (sel.ac == null ? 10 : sel.ac),
-      selTagLabel: sel.hp === 0 ? 'down' : sel.conds.length ? sel.conds.join(' \u00b7 ') : sel.hp <= sel.max / 2 ? 'bloodied' : 'steady',
+      selTagLabel: sel.hp === 0 ? 'down' : sel.conds.length ? sel.conds.map(c => c.name).join(' \u00b7 ') : sel.hp <= sel.max / 2 ? 'bloodied' : 'steady',
       selTag: 'padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 600; background: ' + (sel.hp <= sel.max / 2 ? '#211514' : '#191f26') + '; color: ' + (sel.hp <= sel.max / 2 ? '#e08d7c' : '#8b95a3') + ';',
       dmg1: () => this.hp(sel.id, -1), dmg5: () => this.hp(sel.id, -5),
       heal1: () => this.hp(sel.id, 1), heal5: () => this.hp(sel.id, 5),
-      conds: CONDS.map(name => ({
-        name, toggle: () => this.cond(name),
-        style: 'padding: 3px 9px; border-radius: 12px; font-family: inherit; font-size: 10.5px; cursor: pointer; border: 1px solid ' + (sel.conds.includes(name) ? '#46375f' : '#2b333d') + '; background: ' + (sel.conds.includes(name) ? '#22192e' : 'transparent') + '; color: ' + (sel.conds.includes(name) ? '#c4b2ff' : '#8b95a3') + ';'
+      conds: CONDS.map(name => {
+        const on = sel.conds.some(c => c.name === name);
+        return { name, toggle: () => this.cond(name),
+          style: 'padding: 3px 9px; border-radius: 12px; font-family: inherit; font-size: 10.5px; cursor: pointer; border: 1px solid ' + (on ? '#46375f' : '#2b333d') + '; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#8b95a3') + ';' };
+      }),
+      // Active conditions with a rounds control (\u221e / \u2212 N +).
+      activeConds: sel.conds.map(c => ({
+        name: c.name, rounds: c.rounds == null ? '\u221e' : String(c.rounds),
+        setInf: () => this.setCondRounds(c.name, null),
+        less: () => this.setCondRounds(c.name, Math.max(1, (c.rounds == null ? 1 : c.rounds) - 1)),
+        more: () => this.setCondRounds(c.name, (c.rounds == null ? 1 : c.rounds) + 1),
+        clear: () => this.cond(c.name)
       })),
+      hasConds: sel.conds.length > 0,
+      // Attacks \u2014 click to roll to-hit + damage into the log.
+      selAttacks: (sel.attacks || []).map((a, i) => ({
+        name: a.name, hit: a.hit, hitLabel: (a.hit >= 0 ? '+' + a.hit : String(a.hit)), dmg: a.dmg,
+        roll: () => this.rollAttack(a),
+        editName: e => this.editAttack(i, 'name', e.target.value),
+        editHit: e => this.editAttack(i, 'hit', e.target.value),
+        editDmg: e => this.editAttack(i, 'dmg', e.target.value),
+        remove: () => this.removeAttack(i)
+      })),
+      addAttack: () => this.addAttack(),
+      numInputS: 'width: 34px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 10.5px; text-align: center; outline: none;',
 
       books: books.map((name, i) => ({ name, style: tabBtn(i === s.book), pick: () => this.setState({ book: i }) })),
       bookName: books[s.book], bookPage: excerpt.page || 22,
