@@ -109,7 +109,7 @@
 
   <div style="display: grid; grid-template-columns: 236px 1fr 306px; min-height: 0;">
 
-    <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0;">
+    <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-y: auto;">
       <div style="padding: 10px;">
         <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" title="Type to filter the screen list below by name (case-insensitive)." style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
       </div>
@@ -138,22 +138,83 @@
         </sc-for>
       </div>
 
-      <div style="flex: 1;"></div>
+      <div style="flex: 1; min-height: 10px;"></div>
 
-      <div style="margin: 10px; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
-          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered ambient audio for the scene — it actually plays (synthesized in the browser). Toggle each layer with its dot or set its volume with the slider; nudging a slider above zero also switches that layer on. Sound starts on your first click on the page. Press M (or the mute button) to silence everything at once without losing the mix.">?</span></span><span style="display: flex; align-items: center; gap: 6px;"><button onClick="{{ toggleMute }}" style="{{ muteBtn }}" title="Mute all sound — shortcut: M">{{ muteLabel }}</button><span>{{ mixLabel }}</span></span>
+      <!-- MUSIC PLAYER -->
+      <div style="margin: 10px 10px 0; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
+          <span style="display: flex; align-items: center; gap: 5px;">Music<span class="help" title="Play your own music. Load the folder once and it's remembered between sessions (you may need one click to reconnect); or ＋ to add individual files. Filter by category, click a track to play, and use the transport to pause or skip. Nothing is uploaded — files are read locally. Press M to mute everything.">?</span></span>
+          <button onClick="{{ toggleMute }}" style="{{ muteBtn }}" title="Mute all sound — shortcut: M">{{ muteLabel }}</button>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 7px;">
-          <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="4">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <button onClick="{{ s.toggle }}" style="{{ s.dot }}"></button>
-              <span style="{{ s.label }}">{{ s.name }}</span>
-              <input type="range" min="0" max="100" value="{{ s.level }}" onChange="{{ s.set }}" style="width: 84px; height: 3px;">
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <button onClick="{{ pickFolder }}" style="flex: 1; height: 26px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; cursor: pointer;" style-hover="background: #2c2140;" title="Pick your music folder (remembered next time)">Load folder</button>
+          <button onClick="{{ addSongs }}" style="width: 26px; height: 26px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 13px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add individual song files">＋</button>
+        </div>
+        <div style="margin-top: 5px; font-size: 10px; color: #5f6875;">{{ libLabel }}</div>
+        <sc-if value="{{ showReconnect }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ grantReconnect }}" style="width: 100%; margin-top: 5px; height: 24px; background: #2c2140; border: 1px solid #6d5bb5; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 10.5px; cursor: pointer;">Reconnect remembered folder</button>
+        </sc-if>
+        <sc-if value="{{ hasTracks }}" hint-placeholder-val="{{ true }}">
+          <select value="{{ musicCat }}" onChange="{{ onMusicCat }}" style="width: 100%; margin-top: 7px; height: 26px; background: #0d1013; border: 1px solid #262d36; border-radius: 6px; color: #e6e9ee; font-family: inherit; font-size: 11px;">
+            <sc-for list="{{ musicCats }}" as="c" hint-placeholder-count="6"><option value="{{ c }}">{{ c }}</option></sc-for>
+          </select>
+          <div style="display: flex; align-items: center; gap: 6px; margin-top: 7px;">
+            <button onClick="{{ prevMusic }}" style="width: 24px; height: 24px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;">⏮</button>
+            <button onClick="{{ toggleMusic }}" style="width: 28px; height: 24px; background: #22192e; border: 1px solid #46375f; border-radius: 5px; color: #c4b2ff; font-family: inherit; cursor: pointer;">{{ playIcon }}</button>
+            <button onClick="{{ nextMusic }}" style="width: 24px; height: 24px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;">⏭</button>
+            <span style="flex: 1; min-width: 0; font-size: 11px; color: #c3cad4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ nowPlayingName }}">{{ nowPlayingName }}</span>
+          </div>
+          <input type="range" min="0" max="100" value="{{ musicVol }}" onChange="{{ setMusicVol }}" title="Music volume" style="width: 100%; height: 3px; margin-top: 7px;">
+          <div style="max-height: 148px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; gap: 1px;">
+            <sc-for list="{{ musicList }}" as="m" hint-placeholder-count="8">
+              <button onClick="{{ m.play }}" style="{{ m.rowStyle }}" style-hover="background: #1a1f26;">
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ m.name }}</span>
+                <span style="font-size: 9px; color: #5f6875; flex: none;">{{ m.cat }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- SOUNDSCAPE (layered looping ambience from your library) -->
+      <div style="margin: 10px; padding: 9px 10px; background: #161b21; border: 1px solid #232a33; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 7px;">
+          <span style="display: flex; align-items: center; gap: 5px;">Soundscape<span class="help" title="Layered background ambience from your library. Each layer loops a track from a category — toggle it with the dot, set its volume, ⟳ shuffles to another track in that category, and the dropdown changes the category. Add or remove layers, and save the whole mix as a preset to recall later. Muted by M along with everything else.">?</span></span>
+          <span>{{ mixLabel }}</span>
+        </div>
+        <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+          <select value="{{ preset }}" onChange="{{ onPreset }}" title="Load a saved preset" style="flex: 1; min-width: 0; height: 24px; background: #0d1013; border: 1px solid #262d36; border-radius: 6px; color: #e6e9ee; font-family: inherit; font-size: 10.5px;">
+            <option value="">Presets…</option>
+            <sc-for list="{{ presetNames }}" as="p" hint-placeholder-count="2"><option value="{{ p }}">{{ p }}</option></sc-for>
+          </select>
+          <button onClick="{{ savePreset }}" style="height: 24px; padding: 0 8px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Save the current mix as a preset">save</button>
+          <sc-if value="{{ canDeletePreset }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ deletePreset }}" style="width: 24px; height: 24px; background: #211514; border: 1px solid #452a26; border-radius: 6px; color: #e08d7c; font-family: inherit; font-size: 11px; cursor: pointer;" title="Delete the selected preset">✕</button>
+          </sc-if>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 9px;">
+          <sc-for list="{{ soundLayers }}" as="l" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button onClick="{{ l.toggle }}" style="{{ l.dot }}"></button>
+                <select value="{{ l.category }}" onChange="{{ l.setCat }}" style="flex: 1; min-width: 0; height: 22px; background: #0d1013; border: 1px solid #262d36; border-radius: 5px; color: #c3cad4; font-family: inherit; font-size: 10.5px;">
+                  <sc-for list="{{ l.cats }}" as="c" hint-placeholder-count="6"><option value="{{ c }}">{{ c }}</option></sc-for>
+                </select>
+                <button onClick="{{ l.reshuffle }}" style="width: 22px; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #8f7ad6; font-family: inherit; font-size: 11px; cursor: pointer;" title="Shuffle to another track in this category">⟳</button>
+                <button onClick="{{ l.remove }}" style="width: 22px; height: 22px; background: none; border: 1px solid #2b333d; border-radius: 5px; color: #6f7987; font-family: inherit; font-size: 11px; cursor: pointer;" title="Remove this layer">✕</button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; padding-left: 15px;">
+                <span style="flex: 1; min-width: 0; font-size: 10px; color: #6f7987; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ l.trackName }}">{{ l.trackName }}</span>
+                <input type="range" min="0" max="100" value="{{ l.level }}" onChange="{{ l.setVol }}" style="width: 66px; height: 3px;">
+              </div>
             </div>
           </sc-for>
         </div>
+        <button onClick="{{ addLayer }}" style="width: 100%; margin-top: 9px; height: 24px; background: #191f26; border: 1px dashed #3a434e; border-radius: 6px; color: #8b95a3; font-family: inherit; font-size: 10.5px; cursor: pointer;" style-hover="border-color: #4a3f6b; color: #c3cad4;">＋ Add layer</button>
       </div>
+
+      <audio ref="{{ musicRef }}"></audio>
+      <input ref="{{ addRef }}" type="file" accept="audio/*" multiple onChange="{{ onAddFiles }}" style="display: none;">
     </aside>
 
     <main ref="{{ canvasRef }}" style="position: relative; overflow: auto; background-color: #0d1013; background-image: linear-gradient(#161b22 1px, transparent 1px), linear-gradient(90deg, #161b22 1px, transparent 1px); background-size: 28px 28px;">
@@ -469,11 +530,44 @@ const PREFABS = [
   { name: 'The Citadel', count: '9 tiles' }
 ];
 
+// --- Music library helpers ------------------------------------------------
+const MUSIC_CATS = ['Combat', 'Boss', 'Tavern & Town', 'Dungeon', 'Horror', 'Tension', 'Ritual', 'Travel', 'Rest & Sorrow', 'Other'];
+// Guess a track's category from its filename (works with these libraries'
+// "Prefix ⧸ sub …" and keyword naming).
+function categorize(name) {
+  const n = name.toLowerCase();
+  if (/boss/.test(n)) return 'Boss';
+  if (/combat|battle|war drum|siege|norse|rally/.test(n)) return 'Combat';
+  if (/tavern|\binn\b|town|city|shop|market|backstreet/.test(n)) return 'Tavern & Town';
+  if (/dungeon|crypt|sewer|\blab\b|underground/.test(n)) return 'Dungeon';
+  if (/horror|haunt|spooky|eerie|cthulu|dread|undead|forebo|nightmare|creepy|\bgrim\b|monster|mansion/.test(n)) return 'Horror';
+  if (/tension|chase|suspense|sneak|stealth|pursuit|standoff|interrogat|heist|unease|ticking|revelation|panic/.test(n)) return 'Tension';
+  if (/ritual|divine|sacred|choral|choir/.test(n)) return 'Ritual';
+  if (/travel|wilderness|explorat|forest|road|\bland\b|celtic|misty|windy|journey|wander|river|elven/.test(n)) return 'Travel';
+  if (/rest|camp|fire|calm|downtime|friend|\bsad|sorrow|requiem|aftermath|bittersweet|melancholy|tragic|peace/.test(n)) return 'Rest & Sorrow';
+  return 'Other';
+}
+// Minimal IndexedDB key/value — used to remember the picked folder handle so
+// the library survives reloads (a FileSystemDirectoryHandle can't go in
+// localStorage). Chrome/Edge; other browsers use the file-input fallback.
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const o = indexedDB.open('dmscreen', 1);
+    o.onupgradeneeded = () => o.result.createObjectStore('kv');
+    o.onsuccess = () => res(o.result);
+    o.onerror = () => rej(o.error);
+  });
+}
+function idbSet(key, val) { return idbOpen().then(db => new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(val, key); t.oncomplete = () => { db.close(); res(); }; t.onerror = () => rej(t.error); })); }
+function idbGet(key) { return idbOpen().then(db => new Promise((res, rej) => { const t = db.transaction('kv', 'readonly'); const g = t.objectStore('kv').get(key); g.onsuccess = () => { db.close(); res(g.result); }; g.onerror = () => rej(g.error); })); }
+
 class Component extends DCLogic {
   state = {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false,
+    tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70,
+    presets: [], preset: '', layerSeq: 3,
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -485,10 +579,8 @@ class Component extends DCLogic {
       { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [] }
     ],
     sounds: [
-      { name: 'Rain, light', level: 58, on: true },
-      { name: 'Crows', level: 24, on: true },
-      { name: 'Campfire', level: 40, on: false },
-      { name: 'Low drone', level: 16, on: false }
+      { id: 'L1', category: 'Travel', trackName: null, level: 55, on: false },
+      { id: 'L2', category: 'Tavern & Town', trackName: null, level: 40, on: false }
     ],
     beats: [
       { name: 'Captain talks first, fights second', done: true },
@@ -524,89 +616,199 @@ class Component extends DCLogic {
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
     if (document.body) this._drag(document.body);
-    // Browsers block audio until the first user gesture, so start (or resume)
-    // the soundscape on the first click/key anywhere — that makes the layers
-    // seeded "on" begin playing without the user having to touch the mixer.
-    this._resumeAudio = () => this.syncAudio();
-    document.addEventListener('pointerdown', this._resumeAudio);
-    document.addEventListener('keydown', this._resumeAudio);
+    this._layerAudio = {};          // id -> HTMLAudioElement for soundscape layers
+    this.loadPresets();
+    this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
     clearInterval(this._t);
     document.removeEventListener('keydown', this._key);
-    document.removeEventListener('pointerdown', this._resumeAudio);
-    document.removeEventListener('keydown', this._resumeAudio);
-    if (this._audio) { try { this._audio.ctx.close(); } catch (e) {} this._audio = null; }
+    if (this.music) { this.music.pause(); }
+    if (this._layerAudio) { for (const k in this._layerAudio) { try { this._layerAudio[k].pause(); } catch (e) {} } this._layerAudio = {}; }
     this.closeCast();
   }
 
-  /* --- Soundscape audio engine ---------------------------------------------
-     No audio files ship with the prototype, so each layer is a small piece of
-     procedural ambience built with the Web Audio API: filtered noise and a low
-     drone. Volume follows each slider; the toggle mutes/unmutes. */
-  ensureAudio() {
-    if (this._audio) return this._audio;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    const ctx = new AC();
-    const master = ctx.createGain();
-    master.gain.value = 0.6;
-    master.connect(ctx.destination);
-    const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const d = noise.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    const layers = this.state.sounds.map((_, i) => this.makeLayer(ctx, master, noise, i));
-    this._audio = { ctx, master, layers };
-    return this._audio;
+  /* --- Music library (a folder of the user's tracks) ------------------------
+     Files never leave the machine: with the File System Access API we keep a
+     handle to the picked folder (remembered in IndexedDB) and read the audio
+     lazily as blob URLs. Browsers without that API use the file-input add. */
+  hasFSA() { return typeof window.showDirectoryPicker === 'function'; }
+  async pickFolder() {
+    if (!this.hasFSA()) { this._addInput && this._addInput.click(); return; }
+    try {
+      const dir = await window.showDirectoryPicker({ id: 'dnd-music', mode: 'read' });
+      try { await idbSet('musicDir', dir); } catch (e) {}
+      this._dir = dir;
+      await this.readDir(dir);
+      this.logIt('Loaded music folder “' + dir.name + '”');
+    } catch (e) { /* user cancelled */ }
   }
-  makeLayer(ctx, master, noiseBuf, i) {
-    const out = ctx.createGain();
-    out.gain.value = 0;
-    out.connect(master);
-    const start = n => { try { n.start(); } catch (e) {} };
-    if (i === 3) {
-      // Low drone — a couple of detuned low tones.
-      const dg = ctx.createGain(); dg.gain.value = 0.5; dg.connect(out);
-      [55, 55.4, 110].forEach((f, k) => {
-        const o = ctx.createOscillator();
-        o.type = k === 2 ? 'triangle' : 'sine';
-        o.frequency.value = f;
-        o.connect(dg); start(o);
-      });
-    } else {
-      const src = ctx.createBufferSource();
-      src.buffer = noiseBuf; src.loop = true;
-      if (i === 0) {                 // Rain, light — bright hiss.
-        const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1400;
-        src.connect(f); f.connect(out);
-      } else if (i === 1) {          // Crows — mid band with a warble.
-        const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 1.4;
-        const trem = ctx.createGain(); trem.gain.value = 0.65;
-        const lfo = ctx.createOscillator(); lfo.frequency.value = 5.5;
-        const lg = ctx.createGain(); lg.gain.value = 0.5;
-        lfo.connect(lg); lg.connect(trem.gain); start(lfo);
-        src.connect(f); f.connect(trem); trem.connect(out);
-      } else {                       // Campfire — low, filtered rumble.
-        const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 620;
-        src.connect(f); f.connect(out);
+  async reconnectLibrary() {
+    if (!this.hasFSA()) { this.setState({ libStatus: 'unsupported' }); return; }
+    let dir; try { dir = await idbGet('musicDir'); } catch (e) {}
+    if (!dir) return;
+    this._dir = dir;
+    let perm = 'prompt';
+    try { perm = await dir.queryPermission({ mode: 'read' }); } catch (e) {}
+    if (perm === 'granted') this.readDir(dir);
+    else this.setState({ libStatus: 'reconnect' });
+  }
+  async grantReconnect() {
+    const dir = this._dir || (await idbGet('musicDir').catch(() => null));
+    if (!dir) return;
+    let perm = 'denied';
+    try { perm = await dir.requestPermission({ mode: 'read' }); } catch (e) {}
+    if (perm === 'granted') this.readDir(dir);
+  }
+  async readDir(dir) {
+    this.setState({ libStatus: 'connecting' });
+    const tracks = [];
+    try {
+      for await (const entry of dir.values()) {
+        if (entry.kind === 'file' && /\.(mp3|ogg|wav|m4a|flac|aac)$/i.test(entry.name)) {
+          const file = await entry.getFile();
+          const name = entry.name.replace(/\.[^.]+$/, '');
+          tracks.push({ name, category: categorize(name), url: URL.createObjectURL(file) });
+        }
       }
-      start(src);
+    } catch (e) { console.error(e); }
+    tracks.sort((a, b) => a.name.localeCompare(b.name));
+    this.setState({ tracks, libStatus: 'ready' });
+    this.bindLayerTracks();
+  }
+  // The file-input fallback (and "Add songs" everywhere): merge picked files in.
+  addFiles(fileList) {
+    const more = [];
+    for (const file of fileList) {
+      if (!/\.(mp3|ogg|wav|m4a|flac|aac)$/i.test(file.name)) continue;
+      const name = file.name.replace(/\.[^.]+$/, '');
+      more.push({ name, category: categorize(name), url: URL.createObjectURL(file) });
     }
-    const scale = [0.5, 0.28, 0.6, 0.5][i];
-    return { set: (on, level) => out.gain.setTargetAtTime(on ? (level / 100) * scale : 0, ctx.currentTime, 0.05) };
+    if (!more.length) return;
+    this.setState(s => {
+      const seen = new Set(s.tracks.map(t => t.name));
+      const merged = s.tracks.concat(more.filter(t => !seen.has(t.name))).sort((a, b) => a.name.localeCompare(b.name));
+      return { tracks: merged, libStatus: 'ready' };
+    });
+    this.bindLayerTracks();
+    this.logIt('Added ' + more.length + ' track' + (more.length > 1 ? 's' : ''));
   }
-  syncAudio() {
-    const a = this.ensureAudio();
-    if (!a) return;
-    if (a.ctx.state === 'suspended') a.ctx.resume();
-    // Mute-all rides the master gain, so it silences everything without losing
-    // each layer's on/off and volume (unmute restores the exact mix).
-    a.master.gain.setTargetAtTime(this.state.muted ? 0 : 0.6, a.ctx.currentTime, 0.03);
-    this.state.sounds.forEach((s, i) => a.layers[i] && a.layers[i].set(s.on, s.level));
+  tracksIn(cat) { return this.state.tracks.filter(t => t.category === cat); }
+  trackByName(n) { return this.state.tracks.find(t => t.name === n) || null; }
+
+  /* --- Music player (foreground, one track at a time) ----------------------- */
+  playTrack(i) {
+    const t = this.state.tracks[i];
+    if (!t || !this.music) return;
+    if (this.state.nowPlaying === i && this.state.musicPlaying) { this.music.pause(); this.setState({ musicPlaying: false }); return; }
+    this.music.src = t.url;
+    this.music.volume = this.state.musicVol / 100;
+    this.music.muted = this.state.muted;
+    this.music.play().catch(() => {});
+    this.setState({ nowPlaying: i, musicPlaying: true });
+    this.logIt('Now playing “' + t.name + '”');
   }
+  toggleMusic() {
+    if (!this.music) return;
+    if (this.state.nowPlaying == null) { const f = this.filteredTracks()[0]; if (f) this.playTrack(f._i); return; }
+    if (this.music.paused) { this.music.play().catch(() => {}); this.setState({ musicPlaying: true }); }
+    else { this.music.pause(); this.setState({ musicPlaying: false }); }
+  }
+  stepTrack(d) {
+    const list = this.filteredTracks();
+    if (!list.length) return;
+    let pos = list.findIndex(t => t._i === this.state.nowPlaying);
+    pos = (pos + d + list.length) % list.length;
+    this.playTrack(list[pos]._i);
+  }
+  filteredTracks() {
+    const c = this.state.musicCat;
+    return this.state.tracks.map((t, i) => ({ ...t, _i: i })).filter(t => c === 'All' || t.category === c);
+  }
+  setMusicVol(v) { this.setState({ musicVol: v }); if (this.music) this.music.volume = v / 100; }
+
+  /* --- Soundscape (background layers of looping tracks) --------------------- */
+  bindLayerTracks() {
+    // Give every layer a concrete track from its category (keeps a chosen one
+    // if it still exists), then push audio to match.
+    this.setState(s => ({
+      sounds: s.sounds.map(l => {
+        const pool = this.tracksIn(l.category);
+        let name = l.trackName && pool.some(t => t.name === l.trackName) ? l.trackName : (pool.length ? pool[Math.floor(Math.random() * pool.length)].name : null);
+        return { ...l, trackName: name };
+      })
+    }));
+    this.syncLayers();
+  }
+  syncLayers() {
+    const map = this._layerAudio || (this._layerAudio = {});
+    const live = new Set();
+    for (const l of this.state.sounds) {
+      live.add(l.id);
+      let a = map[l.id];
+      if (!a) { a = map[l.id] = new Audio(); a.loop = true; }
+      const t = this.trackByName(l.trackName);
+      const url = t ? t.url : '';
+      if (url && a.src !== url) a.src = url;
+      a.muted = this.state.muted;
+      a.volume = Math.max(0, Math.min(1, l.level / 100));
+      if (l.on && url && !this.state.muted) { if (a.paused) a.play().catch(() => {}); }
+      else { if (!a.paused) a.pause(); }
+    }
+    for (const id in map) if (!live.has(id)) { try { map[id].pause(); } catch (e) {} delete map[id]; }
+  }
+  addLayer() {
+    const cat = MUSIC_CATS.find(c => this.tracksIn(c).length) || 'Travel';
+    const pool = this.tracksIn(cat);
+    const id = 'L' + this.state.layerSeq;
+    this.setState(s => ({ layerSeq: s.layerSeq + 1, sounds: [...s.sounds, { id, category: cat, trackName: pool.length ? pool[0].name : null, level: 45, on: false }] }));
+  }
+  removeLayer(id) {
+    if (this._layerAudio && this._layerAudio[id]) { try { this._layerAudio[id].pause(); } catch (e) {} delete this._layerAudio[id]; }
+    this.setState(s => ({ sounds: s.sounds.filter(l => l.id !== id) }));
+  }
+  setLayerCat(id, cat) {
+    const pool = this.tracksIn(cat);
+    this.setState(s => ({ sounds: s.sounds.map(l => l.id === id ? { ...l, category: cat, trackName: pool.length ? pool[Math.floor(Math.random() * pool.length)].name : null } : l) }));
+    this.syncLayers();
+  }
+  reshuffleLayer(id) {
+    this.setState(s => ({ sounds: s.sounds.map(l => { if (l.id !== id) return l; const pool = this.tracksIn(l.category); return { ...l, trackName: pool.length ? pool[Math.floor(Math.random() * pool.length)].name : null }; }) }));
+    this.syncLayers();
+  }
+  toggleLayer(id) { this.setState(s => ({ sounds: s.sounds.map(l => l.id === id ? { ...l, on: !l.on } : l) })); this.syncLayers(); }
+  setLayerVol(id, v) { this.setState(s => ({ sounds: s.sounds.map(l => l.id === id ? { ...l, level: v, on: v > 0 ? true : l.on } : l) })); this.syncLayers(); }
+
+  /* --- Presets (named soundscape mixes, saved to localStorage) -------------- */
+  loadPresets() { try { this.setState({ presets: JSON.parse(localStorage.getItem('dmscreen.presets') || '[]') }); } catch (e) {} }
+  writePresets(list) { try { localStorage.setItem('dmscreen.presets', JSON.stringify(list)); } catch (e) {} }
+  savePreset() {
+    const name = (window.prompt('Save this soundscape as a preset named:') || '').trim();
+    if (!name) return;
+    const layers = this.state.sounds.map(l => ({ category: l.category, trackName: l.trackName, level: l.level, on: l.on }));
+    this.setState(s => { const others = s.presets.filter(p => p.name !== name); const presets = [...others, { name, layers }].sort((a, b) => a.name.localeCompare(b.name)); this.writePresets(presets); return { presets, preset: name }; });
+    this.logIt('Saved soundscape preset “' + name + '”');
+  }
+  loadPreset(name) {
+    const p = this.state.presets.find(x => x.name === name);
+    if (!p) { this.setState({ preset: '' }); return; }
+    let seq = this.state.layerSeq;
+    const sounds = p.layers.map(l => ({ id: 'L' + (seq++), category: l.category, trackName: l.trackName, level: l.level, on: l.on }));
+    if (this._layerAudio) { for (const k in this._layerAudio) { try { this._layerAudio[k].pause(); } catch (e) {} } this._layerAudio = {}; }
+    this.setState({ sounds, layerSeq: seq, preset: name });
+    this.bindLayerTracks();
+    this.logIt('Loaded soundscape preset “' + name + '”');
+  }
+  deletePreset() {
+    const name = this.state.preset;
+    if (!name) return;
+    this.setState(s => { const presets = s.presets.filter(p => p.name !== name); this.writePresets(presets); return { presets, preset: '' }; });
+  }
+
   toggleMute() {
     this.setState(s => ({ muted: !s.muted }));
-    this.syncAudio();
+    if (this.music) this.music.muted = this.state.muted;
+    this.syncLayers();
     this.logIt(this.state.muted ? 'Muted all sound' : 'Unmuted sound');
   }
 
@@ -805,6 +1007,14 @@ class Component extends DCLogic {
     const excerpt = RULES[s.excerpt];
     const books = ['Core Rules', 'Bestiary', 'Region Gazetteer'];
 
+    // Music: categories present in the library, and the filtered track rows.
+    const presentCats = MUSIC_CATS.filter(c => s.tracks.some(t => t.category === c));
+    const musicList = s.tracks.map((t, i) => ({ t, i })).filter(o => s.musicCat === 'All' || o.t.category === s.musicCat).map(o => ({
+      name: o.t.name, cat: o.t.category, playing: o.i === s.nowPlaying,
+      play: () => this.playTrack(o.i),
+      rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border: 0; border-radius: 5px; text-align: left; cursor: pointer; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? '#1c1730' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? '#c4b2ff' : '#a7b0bc') + ';'
+    }));
+
     return {
       isPrep, round: s.round, castOn: s.castOn, castFallback: s.castFallback, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
       clock: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s.secs % 60).padStart(2, '0'),
@@ -818,6 +1028,9 @@ class Component extends DCLogic {
       stop: e => e.stopPropagation(),
       paletteRef: el => { this.pal = el; if (el) el.focus(); },
       canvasRef: el => { this.canvas = el; this._drag(el); },
+      musicRef: el => { if (!el) return; this.music = el; el.onended = () => this.stepTrack(1); },
+      addRef: el => { this._addInput = el; },
+      onAddFiles: e => { this.addFiles(e.target.files); e.target.value = ''; },
       onQuery: e => this.setState({ query: e.target.value, pi: 0 }),
       onPaletteKey: e => this.onPaletteKey(e),
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
@@ -830,14 +1043,50 @@ class Component extends DCLogic {
 
       prefabs: PREFABS.map(p => ({ ...p, drop: () => { this.setState(x => ({ tiles: x.tiles + parseInt(p.count, 10) })); this.logIt('Dropped prefab \u201c' + p.name + '\u201d'); } })),
 
-      sounds: s.sounds.map((x, i) => ({
-        name: x.name, level: x.level,
-        dot: 'width: 8px; height: 8px; padding: 0; border-radius: 50%; border: 1px solid ' + (x.on ? '#4fa88b' : '#3a434e') + '; background: ' + (x.on ? '#4fa88b' : 'transparent') + '; cursor: pointer;' + (x.on ? ' animation: om-pulse 2.6s infinite;' : ''),
-        label: 'flex: 1; font-size: 11px; color: ' + (x.on ? '#c3cad4' : '#6f7987') + ';',
-        toggle: () => { this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, on: !y.on } : y) })); this.syncAudio(); },
-        set: e => { const v = +e.target.value; this.setState(st => ({ sounds: st.sounds.map((y, j) => j === i ? { ...y, level: v, on: v > 0 } : y) })); this.syncAudio(); }
+      // --- music library + player ---
+      libStatus: s.libStatus,
+      libLabel: s.libStatus === 'connecting' ? 'loading…' : s.libStatus === 'reconnect' ? 'reconnect' : (s.tracks.length ? s.tracks.length + ' tracks' : 'no folder'),
+      showReconnect: s.libStatus === 'reconnect',
+      pickFolder: () => this.pickFolder(),
+      addSongs: () => { if (this._addInput) this._addInput.click(); },
+      grantReconnect: () => this.grantReconnect(),
+      musicCats: ['All'].concat(presentCats),
+      musicCat: s.musicCat,
+      onMusicCat: e => this.setState({ musicCat: e.target.value }),
+      musicList: musicList,
+      hasTracks: s.tracks.length > 0,
+      nowPlayingName: s.nowPlaying != null && s.tracks[s.nowPlaying] ? s.tracks[s.nowPlaying].name : '—',
+      musicPlaying: s.musicPlaying,
+      playIcon: s.musicPlaying ? '⏸' : '▶',
+      toggleMusic: () => this.toggleMusic(),
+      prevMusic: () => this.stepTrack(-1),
+      nextMusic: () => this.stepTrack(1),
+      musicVol: s.musicVol,
+      setMusicVol: e => this.setMusicVol(+e.target.value),
+
+      // --- soundscape layers ---
+      soundLayers: s.sounds.map(l => ({
+        id: l.id, category: l.category, trackName: l.trackName || '—', level: l.level,
+        dot: 'width: 9px; height: 9px; flex: none; padding: 0; border-radius: 50%; cursor: pointer; border: 1px solid ' + (l.on ? '#4fa88b' : '#3a434e') + '; background: ' + (l.on ? '#4fa88b' : 'transparent') + ';' + (l.on ? ' animation: om-pulse 2.6s infinite;' : ''),
+        cats: MUSIC_CATS,
+        toggle: () => this.toggleLayer(l.id),
+        setCat: e => this.setLayerCat(l.id, e.target.value),
+        reshuffle: () => this.reshuffleLayer(l.id),
+        setVol: e => this.setLayerVol(l.id, +e.target.value),
+        remove: () => this.removeLayer(l.id)
       })),
-      mixLabel: s.muted ? 'all muted' : (s.sounds.filter(x => x.on).length + ' layers'),
+      addLayer: () => this.addLayer(),
+      mixLabel: s.muted ? 'all muted' : (s.sounds.filter(x => x.on).length + ' on'),
+
+      // --- presets ---
+      presetNames: s.presets.map(p => p.name),
+      preset: s.preset,
+      hasPresets: s.presets.length > 0,
+      onPreset: e => this.loadPreset(e.target.value),
+      savePreset: () => this.savePreset(),
+      deletePreset: () => this.deletePreset(),
+      canDeletePreset: !!s.preset,
+
       toggleMute: () => this.toggleMute(),
       muteLabel: s.muted ? 'muted' : 'mute',
       muteBtn: 'font-family: inherit; font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid ' + (s.muted ? '#6d5bb5' : '#2b333d') + '; background: ' + (s.muted ? '#2c2140' : 'transparent') + '; color: ' + (s.muted ? '#c4b2ff' : '#6f7987') + ';',
