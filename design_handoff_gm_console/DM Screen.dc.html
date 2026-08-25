@@ -108,9 +108,9 @@
     <button onClick="{{ toggleCast }}" style="{{ castBtn }}" title="Show players. Opens a real second window casting only the map (drag it to a TV or a player's laptop) — hit points, names, conditions, statblocks and notes stay on your screen. If a pop-up blocker stops it, an in-page fallback appears.">{{ castLabel }}</button>
   </header>
 
-  <div style="display: grid; grid-template-columns: 236px 1fr 306px; min-height: 0;">
+  <div style="display: grid; grid-template-columns: {{ gridCols }}; min-height: 0;">
 
-    <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-y: auto;">
+    <aside style="background: #12161b; border-right: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden; overflow-y: auto;">
       <div style="padding: 10px 10px 0;">
         <div style="display: flex; align-items: center; gap: 5px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 6px;">Campaign<span class="help" title="Save the whole session — combatants, HP, notes, tile layouts and soundscape — as a named campaign on this device, or export it to a .json file you can back up or move to another machine and import. Loading or importing replaces the current session.">?</span></div>
         <div style="display: flex; gap: 4px;">
@@ -237,6 +237,8 @@
       <audio ref="{{ musicRef }}"></audio>
       <input ref="{{ addRef }}" type="file" accept="audio/*" multiple onChange="{{ onAddFiles }}" style="display: none;">
     </aside>
+
+    <button onClick="{{ toggleLeft }}" title="Show or hide the left panel (screens, prefabs, music)" style="background: #12161b; border: 0; border-right: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ leftChevron }}</button>
 
     <main ref="{{ canvasRef }}" style="position: relative; overflow: auto; background-color: #0d1013; background-image: linear-gradient(#161b22 1px, transparent 1px), linear-gradient(90deg, #161b22 1px, transparent 1px); background-size: 28px 28px;">
 
@@ -501,7 +503,9 @@
       </div>
     </main>
 
-    <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0;">
+    <button onClick="{{ toggleRight }}" title="Show or hide the right panel (initiative, party, log)" style="background: #12161b; border: 0; border-left: 1px solid #232a33; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4; background: #161b21;">{{ rightChevron }}</button>
+
+    <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px;">
         <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
         <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant is highlighted and its map token rings; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through.">?</span>
@@ -689,6 +693,7 @@ class Component extends DCLogic {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
+    leftOpen: true, rightOpen: true,
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
@@ -1504,6 +1509,11 @@ class Component extends DCLogic {
 
     return {
       isPrep, round: s.round, castOn: s.castOn, castFallback: s.castFallback, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
+      leftOpen: s.leftOpen, rightOpen: s.rightOpen,
+      gridCols: (s.leftOpen ? '236px' : '0px') + ' 18px 1fr 18px ' + (s.rightOpen ? '306px' : '0px'),
+      leftChevron: s.leftOpen ? '‹' : '›', rightChevron: s.rightOpen ? '›' : '‹',
+      toggleLeft: () => this.setState(st => ({ leftOpen: !st.leftOpen })),
+      toggleRight: () => this.setState(st => ({ rightOpen: !st.rightOpen })),
       clock: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s.secs % 60).padStart(2, '0'),
       modeLabel: isPrep ? 'Prep' : 'Running',
       liveDot: isPrep ? '#d0b25a' : '#4fa88b',
