@@ -354,6 +354,26 @@
                 </div>
               </sc-for>
             </div>
+
+            <div style="margin-top: 13px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Saves &amp; checks</div>
+            <div style="margin-top: 5px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-family: 'Space Grotesk', sans-serif;">
+              <sc-for list="{{ saves }}" as="a" hint-placeholder-count="6">
+                <button onClick="{{ a.roll }}" style="display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 0; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Roll a d20 save/check (uses the advantage setting)">
+                  <span style="font-size: 9px; font-weight: 600; letter-spacing: .04em;">{{ a.abbr }}</span>
+                  <span style="font-size: 10px; color: #8b95a3; font-variant-numeric: tabular-nums;">{{ a.modLabel }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="margin-top: 4px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;">
+              <sc-for list="{{ saves }}" as="a" hint-placeholder-count="6">
+                <input value="{{ a.mod }}" onChange="{{ a.edit }}" type="number" title="Modifier for {{ a.abbr }}" style="width: 100%; height: 18px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: 'Space Grotesk', sans-serif; font-size: 10px; text-align: center; outline: none;">
+              </sc-for>
+            </div>
+
+            <div style="margin-top: 11px; display: flex; align-items: center; gap: 6px;">
+              <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: none;">Conc</span>
+              <input value="{{ selConc }}" onChange="{{ onConc }}" placeholder="spell (blank = none)" style="flex: 1; min-width: 0; height: 20px; background: #0d1013; border: 1px solid {{ concBorder }}; border-radius: 5px; color: #c3cad4; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; padding: 0 6px; outline: none;">
+            </div>
           </div>
         </section>
 
@@ -426,6 +446,11 @@
               <div style="display: flex; align-items: baseline; gap: 8px;">
                 <span style="font-family: 'Crimson Pro', serif; font-size: 34px; font-weight: 600; line-height: 1; color: {{ rollColor }}; font-variant-numeric: tabular-nums;">{{ rollTotal }}</span>
                 <span style="color: #8b95a3; font-size: 11px;">{{ rollDetail }}</span>
+              </div>
+              <div style="margin-top: 9px; display: flex; gap: 5px;">
+                <sc-for list="{{ advBtns }}" as="a" hint-placeholder-count="3">
+                  <button onClick="{{ a.set }}" style="{{ a.style }}" title="Applies to d20 rolls, attacks, and saves">{{ a.label }}</button>
+                </sc-for>
               </div>
               <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
                 <sc-for list="{{ dice }}" as="d" hint-placeholder-count="8">
@@ -524,7 +549,7 @@
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 5px; margin: 12px 12px 0; padding-top: 10px; border-top: 1px solid #232a33; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Session log<span class="help" title="An automatic transcript of the session. Every action here — damage and healing, dice rolls, turn changes, opened rules, dropped prefabs — is timestamped and written newest-first, so you have a record without taking notes. Critical moments (a combatant going down) show in red.">?</span></div>
+      <div style="display: flex; align-items: center; gap: 5px; margin: 12px 12px 0; padding-top: 10px; border-top: 1px solid #232a33; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Session log<span class="help" title="An automatic transcript of the session. Every action here — damage and healing, dice rolls, saves, turn changes, opened rules — is timestamped and written newest-first. ⭳ downloads it as a Markdown recap. Critical moments (a combatant going down, a broken concentration) show in red.">?</span><span style="flex: 1;"></span><button onClick="{{ exportLog }}" style="background: none; border: 0; color: #6f7987; font-family: inherit; font-size: 12px; cursor: pointer; padding: 0;" style-hover="color: #c3cad4;" title="Download the session log as a Markdown recap">⭳</button></div>
       <div style="margin: 6px 12px 12px; overflow: auto; flex: 1; min-height: 70px; display: flex; flex-direction: column; gap: 5px;">
         <sc-for list="{{ log }}" as="l" hint-placeholder-count="6">
           <div style="display: flex; gap: 7px; font-size: 11px; line-height: 1.35;">
@@ -663,21 +688,21 @@ class Component extends DCLogic {
   state = {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
-    pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false,
+    pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
     extraTiles: [], tileSeq: 1, pdf: null, layouts: {},
     campaigns: {}, campaign: '',
     combatants: [
-      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, ac: 15, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [], attacks: [{ name: 'Longbow', hit: 7, dmg: '1d8+4' }, { name: 'Shortsword', hit: 6, dmg: '1d6+3' }] },
-      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, ac: 15, pc: false, badge: 'improvised', x: 54, y: 34, conds: [], attacks: [{ name: 'Scimitar', hit: 5, dmg: '1d6+3' }, { name: 'Dagger', hit: 5, dmg: '1d4+3' }] },
-      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, ac: 18, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [], attacks: [{ name: 'Greatsword', hit: 6, dmg: '2d6+4' }] },
-      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, ac: 12, pc: false, badge: 'archer', x: 70, y: 24, conds: [], attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
-      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, ac: 12, pc: false, badge: 'archer', x: 78, y: 44, conds: [{ name: 'Prone', rounds: null }], attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
-      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, ac: 12, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [], attacks: [{ name: 'Fire Bolt', hit: 5, dmg: '2d10' }, { name: 'Dagger', hit: 2, dmg: '1d4' }] },
-      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, ac: 13, pc: false, badge: 'pack', x: 66, y: 62, conds: [], attacks: [{ name: 'Bite', hit: 4, dmg: '2d4+2' }] },
-      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, ac: 16, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [], attacks: [{ name: 'Mace', hit: 5, dmg: '1d6+2' }, { name: 'Sacred Flame', hit: 0, dmg: '1d8' }] }
+      { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, ac: 15, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [], conc: null, abil: { str: 1, dex: 4, con: 2, int: 0, wis: 2, cha: 0 }, attacks: [{ name: 'Longbow', hit: 7, dmg: '1d8+4' }, { name: 'Shortsword', hit: 6, dmg: '1d6+3' }] },
+      { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, ac: 15, pc: false, badge: 'improvised', x: 54, y: 34, conds: [], conc: null, abil: { str: 2, dex: 3, con: 2, int: 2, wis: 0, cha: 2 }, attacks: [{ name: 'Scimitar', hit: 5, dmg: '1d6+3' }, { name: 'Dagger', hit: 5, dmg: '1d4+3' }] },
+      { id: 'p2', name: 'Dorn', init: 16, hp: 51, max: 58, ac: 18, pc: true, badge: 'fighter 5', x: 38, y: 74, conds: [], conc: null, abil: { str: 4, dex: 1, con: 3, int: 0, wis: 1, cha: 0 }, attacks: [{ name: 'Greatsword', hit: 6, dmg: '2d6+4' }] },
+      { id: 'c2', name: 'Bandit', init: 14, hp: 11, max: 11, ac: 12, pc: false, badge: 'archer', x: 70, y: 24, conds: [], conc: null, abil: { str: 1, dex: 2, con: 1, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
+      { id: 'c3', name: 'Bandit', init: 14, hp: 6, max: 11, ac: 12, pc: false, badge: 'archer', x: 78, y: 44, conds: [{ name: 'Prone', rounds: null }], conc: null, abil: { str: 1, dex: 2, con: 1, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Shortbow', hit: 3, dmg: '1d6+1' }] },
+      { id: 'p3', name: 'Iskra', init: 12, hp: 22, max: 33, ac: 12, pc: true, badge: 'wizard 5', x: 22, y: 46, conds: [], conc: null, abil: { str: -1, dex: 2, con: 1, int: 4, wis: 1, cha: 0 }, attacks: [{ name: 'Fire Bolt', hit: 5, dmg: '2d10' }, { name: 'Dagger', hit: 2, dmg: '1d4' }] },
+      { id: 'c4', name: 'Wolf', init: 9, hp: 11, max: 11, ac: 13, pc: false, badge: 'pack', x: 66, y: 62, conds: [], conc: null, abil: { str: 1, dex: 2, con: 1, int: -4, wis: 1, cha: -2 }, attacks: [{ name: 'Bite', hit: 4, dmg: '2d4+2' }] },
+      { id: 'p4', name: 'Pell', init: 6, hp: 29, max: 36, ac: 16, pc: true, badge: 'cleric 5', x: 44, y: 84, conds: [], conc: null, abil: { str: 1, dex: 0, con: 2, int: 1, wis: 4, cha: 2 }, attacks: [{ name: 'Mace', hit: 5, dmg: '1d6+2' }, { name: 'Sacred Flame', hit: 0, dmg: '1d8' }] }
     ],
     sounds: [
       { id: 'L1', category: 'Travel', trackName: null, level: 55, on: false },
@@ -1237,13 +1262,27 @@ class Component extends DCLogic {
 
   hp(id, d) {
     this.setState(s => {
-      const combatants = s.combatants.map(c => c.id === id ? { ...c, hp: Math.max(0, Math.min(c.max, c.hp + d)) } : c);
-      const c = combatants.find(x => x.id === id);
       const was = s.combatants.find(x => x.id === id);
-      let text = c.name + ' ' + (d < 0 ? 'took ' + -d : 'healed ' + d) + ' \u2192 ' + c.hp + '/' + c.max;
-      if (c.hp === 0 && was.hp > 0) text = c.name + ' is down';
-      else if (c.hp <= c.max / 2 && was.hp > was.max / 2) text = c.name + ' is bloodied (' + c.hp + '/' + c.max + ')';
-      return { combatants, log: [...s.log, { t: this.clockShort(), text, hot: c.hp === 0 }].slice(-40) };
+      if (!was) return {};
+      const newHp = Math.max(0, Math.min(was.max, was.hp + d));
+      let text = was.name + ' ' + (d < 0 ? 'took ' + -d : 'healed ' + d) + ' \u2192 ' + newHp + '/' + was.max;
+      if (newHp === 0 && was.hp > 0) text = was.name + ' is down';
+      else if (newHp <= was.max / 2 && was.hp > was.max / 2) text = was.name + ' is bloodied (' + newHp + '/' + was.max + ')';
+      const logs = [{ t: this.clockShort(), text, hot: newHp === 0 }];
+      // Concentration: taking damage forces a Constitution save; dropping to 0 ends it.
+      let conc = was.conc;
+      if (d < 0 && was.conc) {
+        if (newHp === 0) { conc = null; logs.push({ t: this.clockShort(), text: was.name + ' fell \u2014 concentration on ' + was.conc + ' ended', hot: true }); }
+        else {
+          const dc = Math.max(10, Math.floor(-d / 2));
+          const mod = (was.abil && was.abil.con != null) ? was.abil.con : 0;
+          const nat = 1 + Math.floor(Math.random() * 20); const tot = nat + mod;
+          if (tot >= dc) logs.push({ t: this.clockShort(), text: was.name + ' held concentration on ' + was.conc + ' (CON ' + tot + ' vs DC ' + dc + ')' });
+          else { conc = null; logs.push({ t: this.clockShort(), text: was.name + ' lost concentration on ' + was.conc + ' (CON ' + tot + ' vs DC ' + dc + ')', hot: true }); }
+        }
+      }
+      const combatants = s.combatants.map(c => c.id !== id ? c : { ...c, hp: newHp, conc });
+      return { combatants, log: [...s.log, ...logs].slice(-40) };
     });
   }
 
@@ -1316,28 +1355,62 @@ class Component extends DCLogic {
       return { combatants: arr, turn: i < 0 ? 0 : i };
     });
   }
+  // A d20 roll honouring the current advantage/disadvantage mode.
+  d20With(mod) {
+    const mode = this.state.advMode;
+    const r1 = 1 + Math.floor(Math.random() * 20);
+    if (mode === 'norm') return { rolls: [r1], nat: r1, total: r1 + (mod || 0), crit: r1 === 20, fumble: r1 === 1, tag: '' };
+    const r2 = 1 + Math.floor(Math.random() * 20);
+    const nat = mode === 'adv' ? Math.max(r1, r2) : Math.min(r1, r2);
+    return { rolls: [r1, r2], nat, total: nat + (mod || 0), crit: nat === 20, fumble: nat === 1, tag: mode === 'adv' ? ' adv' : ' dis' };
+  }
+  setAdv(mode) { this.setState({ advMode: mode }); }
+  modStr(m) { return (m >= 0 ? '+' + m : String(m)); }
+
   rollAttack(atk) {
     const sel = this.state.combatants.find(c => c.id === this.state.sel) || this.state.combatants[this.state.turn];
     if (!sel) return;
-    const d20 = 1 + Math.floor(Math.random() * 20);
-    const crit = d20 === 20, fumble = d20 === 1;
-    const toHit = d20 + (atk.hit || 0);
+    const r = this.d20With(atk.hit || 0);
     const m = String(atk.dmg || '').match(/^(\d*)d(\d+)([+-]\d+)?$/i);
     let dmgText = atk.dmg || '';
     let dmgTotal = 0;
     if (m) {
       let n = parseInt(m[1] || '1', 10); const f = parseInt(m[2], 10); const bonus = parseInt(m[3] || '0', 10);
-      if (crit) n *= 2;
+      if (r.crit) n *= 2;
       const parts = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * f));
       dmgTotal = parts.reduce((a, b) => a + b, 0) + bonus;
-      dmgText = dmgTotal + ' (' + parts.join('+') + (bonus ? (bonus > 0 ? '+' + bonus : bonus) : '') + ')';
+      dmgText = dmgTotal + ' (' + parts.join('+') + (bonus ? this.modStr(bonus) : '') + ')';
     }
-    const hitStr = fumble ? 'to hit 1 — miss' : (crit ? 'CRIT' : 'to hit ' + toHit + ' (' + d20 + (atk.hit >= 0 ? '+' + atk.hit : atk.hit) + ')');
-    const text = sel.name + ' — ' + atk.name + ': ' + hitStr + (m && !fumble ? ', ' + dmgTotal + ' dmg' : '');
-    this.setState(s => ({
-      rolls: [{ die: atk.name, detail: (fumble ? 'nat 1' : 'd20 ' + toHit) + (m && !fumble ? ' · ' + dmgText : ''), total: fumble ? 1 : toHit, crit }, ...s.rolls].slice(0, 24),
-      log: [...s.log, { t: this.clockShort(), text, hot: crit }].slice(-40)
+    const hitStr = r.fumble ? 'to hit 1 — miss' : (r.crit ? 'CRIT (nat 20)' : 'to hit ' + r.total + ' (' + r.nat + this.modStr(atk.hit || 0) + ')');
+    const text = sel.name + ' — ' + atk.name + r.tag + ': ' + hitStr + (m && !r.fumble ? ', ' + dmgTotal + ' dmg' : '');
+    this.setState(st => ({
+      rolls: [{ die: atk.name + r.tag, detail: (r.fumble ? 'nat 1' : 'd20 ' + r.total) + (m && !r.fumble ? ' · ' + dmgText : ''), total: r.fumble ? 1 : r.total, crit: r.crit }, ...st.rolls].slice(0, 24),
+      log: [...st.log, { t: this.clockShort(), text, hot: r.crit }].slice(-40)
     }));
+  }
+  rollSave(ability) {
+    const sel = this.state.combatants.find(c => c.id === this.state.sel) || this.state.combatants[this.state.turn];
+    if (!sel) return;
+    const mod = (sel.abil && sel.abil[ability] != null) ? sel.abil[ability] : 0;
+    const r = this.d20With(mod);
+    const abbr = ability.toUpperCase();
+    this.setState(st => ({
+      rolls: [{ die: abbr + r.tag, detail: r.rolls.join(', ') + ' ' + this.modStr(mod), total: r.total, crit: r.crit }, ...st.rolls].slice(0, 24),
+      log: [...st.log, { t: this.clockShort(), text: sel.name + ' — ' + abbr + ' save/check' + r.tag + ': ' + r.total + ' (' + r.nat + this.modStr(mod) + ')' }].slice(-40)
+    }));
+  }
+  editAbil(ability, value) { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, abil: { ...(c.abil || {}), [ability]: parseInt(value, 10) || 0 } }) })); }
+  setConc(value) { const v = (value || '').trim(); this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conc: v || null }) })); }
+  exportLog() {
+    const entries = [...this.state.log];
+    const header = '# ' + (this.state.campaign || 'DM Screen') + ' — session recap\n' + new Date().toLocaleString() + '\n\n';
+    const body = entries.map(l => '- ' + (l.t ? '`' + l.t + '` ' : '') + l.text).join('\n');
+    const blob = new Blob([header + body + '\n'], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = (this.state.campaign || 'session') + '-recap.md';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   addAttack() { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: [...(c.attacks || []), { name: 'Attack', hit: 4, dmg: '1d6' }] }) })); }
   editAttack(i, field, value) {
@@ -1352,7 +1425,7 @@ class Component extends DCLogic {
     const id = 'x' + Date.now().toString(36);
     this.setState(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
-      const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [], attacks: [{ name: 'Attack', hit: 4, dmg: '1d6' }] };
+      const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [], conc: null, abil: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Attack', hit: 4, dmg: '1d6' }] };
       const combatants = [...s.combatants];
       let idx = combatants.findIndex(c => c.init < nc.init);      // insert by initiative, keep manual order otherwise
       if (idx < 0) idx = combatants.length;
@@ -1375,6 +1448,12 @@ class Component extends DCLogic {
   }
 
   roll(spec) {
+    if (spec === 'd20') {   // the quick d20 obeys advantage / disadvantage
+      const r = this.d20With(0);
+      this.setState(s => ({ rolls: [{ die: 'd20' + r.tag, detail: r.rolls.join(', '), total: r.total, crit: r.crit }, ...s.rolls].slice(0, 24) }));
+      this.logIt('Rolled d20' + r.tag + ' \u2192 ' + r.total);
+      return;
+    }
     const m = spec.match(/^(\d*)d(\d+)$/);
     const n = parseInt(m[1] || '1', 10), f = parseInt(m[2], 10);
     const parts = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * f));
@@ -1550,6 +1629,16 @@ class Component extends DCLogic {
       onSelBadge: e => this.editCombatant(sel.id, 'badge', e.target.value),
       toggleSelPc: () => this.editCombatant(sel.id, 'pc', !sel.pc),
       removeSel: () => this.removeCombatant(sel.id),
+      saves: ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(a => {
+        const mod = (sel.abil && sel.abil[a] != null) ? sel.abil[a] : 0;
+        return { abbr: a.toUpperCase(), mod: mod, modLabel: (mod >= 0 ? '+' + mod : String(mod)),
+          roll: () => this.rollSave(a),
+          edit: e => this.editAbil(a, e.target.value) };
+      }),
+      selConc: sel.conc || '',
+      onConc: e => this.setConc(e.target.value),
+      hasConc: !!sel.conc,
+      concBorder: sel.conc ? '#6d5bb5' : '#262d36',
       pcLabel: sel.pc ? 'PC' : 'Foe',
       pcBtn: 'height: 22px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 600; border: 1px solid ' + (sel.pc ? '#274539' : '#452a26') + '; background: ' + (sel.pc ? '#14201b' : '#211514') + '; color: ' + (sel.pc ? '#74c3a7' : '#e08d7c') + ';',
       numInput: 'width: 40px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; text-align: center; outline: none;',
@@ -1613,6 +1702,12 @@ class Component extends DCLogic {
       diceTab: tabBtn(s.tool === 'dice'), genTab: tabBtn(s.tool === 'gen'),
       pickDice: () => this.setState({ tool: 'dice' }), pickGen: () => this.setState({ tool: 'gen' }),
       dice: DICE.map(name => ({ name, roll: () => this.roll(name) })),
+      advMode: s.advMode,
+      advBtns: [['norm', 'Normal'], ['adv', 'Advantage'], ['dis', 'Disadvantage']].map(([mode, label]) => ({
+        label, set: () => this.setAdv(mode),
+        style: 'flex: 1; height: 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10.5px; border: 1px solid ' + (s.advMode === mode ? '#46375f' : '#2b333d') + '; background: ' + (s.advMode === mode ? '#22192e' : 'transparent') + '; color: ' + (s.advMode === mode ? '#c4b2ff' : '#8b95a3') + ';'
+      })),
+      d20: () => this.roll('d20'),
       rollTotal: s.rolls[0] ? s.rolls[0].total : '\u2014',
       rollDetail: s.rolls[0] ? s.rolls[0].die + ' \u2192 ' + s.rolls[0].detail : 'pick a die',
       rollColor: s.rolls[0] && s.rolls[0].crit ? '#d0b25a' : '#e6e9ee',
@@ -1631,6 +1726,7 @@ class Component extends DCLogic {
       ],
 
       log: [...s.log].reverse().map(l => ({ t: l.t, text: l.text, style: 'flex: 1; color: ' + (l.hot ? '#e08d7c' : '#a7b0bc') + ';' })),
+      exportLog: () => this.exportLog(),
 
       results: hits.map((r, i) => ({
         kind: r.kind, kindStyle: kindStyle(r.kind), title: r.title,
