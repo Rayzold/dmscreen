@@ -168,10 +168,12 @@
           <input type="range" min="0" max="100" value="{{ musicVol }}" onChange="{{ setMusicVol }}" title="Music volume" style="width: 100%; height: 3px; margin-top: 7px;">
           <div style="max-height: 148px; overflow-y: auto; margin-top: 6px; display: flex; flex-direction: column; gap: 1px;">
             <sc-for list="{{ musicList }}" as="m" hint-placeholder-count="8">
-              <button onClick="{{ m.play }}" style="{{ m.rowStyle }}" style-hover="background: #1a1f26;">
-                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ m.name }}</span>
-                <span style="font-size: 9px; color: #5f6875; flex: none;">{{ m.cat }}</span>
-              </button>
+              <div style="{{ m.rowStyle }}">
+                <button onClick="{{ m.play }}" style="flex: 1; min-width: 0; background: none; border: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ m.name }}">{{ m.name }}</button>
+                <select value="{{ m.cat }}" onChange="{{ m.setCat }}" title="Re-tag this track's category" style="flex: none; max-width: 96px; height: 18px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #8b95a3; font-family: inherit; font-size: 9px;">
+                  <sc-for list="{{ m.allCats }}" as="c" hint-placeholder-count="10"><option value="{{ c }}">{{ c }}</option></sc-for>
+                </select>
+              </div>
             </sc-for>
           </div>
         </sc-if>
@@ -390,6 +392,7 @@
                 <div style="padding: 9px 10px; background: #191f26; border: 1px solid #232a33; border-radius: 8px;">
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">{{ g.name }}</span>
+                    <button onClick="{{ g.toNotes }}" style="background: #14201b; border: 1px solid #274539; border-radius: 5px; color: #74c3a7; font-family: inherit; font-size: 10px; padding: 2px 7px; cursor: pointer;" style-hover="background: #182a23;" title="Add this result to Scene notes as a beat">→ notes</button>
                     <button onClick="{{ g.roll }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 5px; color: #c4b2ff; font-family: inherit; font-size: 10px; padding: 2px 7px; cursor: pointer;" style-hover="background: #2c2140;">roll</button>
                   </div>
                   <div style="margin-top: 5px; font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; line-height: 1.4; color: #e6e9ee;">{{ g.value }}</div>
@@ -597,10 +600,10 @@ class Component extends DCLogic {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false,
-    tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70,
+    tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
-    extraTiles: [], tileSeq: 1, pdf: null,
+    extraTiles: [], tileSeq: 1, pdf: null, layouts: {},
     combatants: [
       { id: 'p1', name: 'Maerith', init: 21, hp: 34, max: 41, pc: true, badge: 'ranger 5', x: 30, y: 62, conds: [] },
       { id: 'c1', name: 'Bandit Captain', init: 19, hp: 42, max: 65, pc: false, badge: 'improvised', x: 54, y: 34, conds: [] },
@@ -652,6 +655,8 @@ class Component extends DCLogic {
     this._layerAudio = {};          // id -> HTMLAudioElement for soundscape layers
     this.loadPresets();
     this.loadNotes();
+    this.loadCatOverrides();
+    this.loadLayouts();
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
@@ -702,7 +707,7 @@ class Component extends DCLogic {
         if (entry.kind === 'file' && /\.(mp3|ogg|wav|m4a|flac|aac)$/i.test(entry.name)) {
           const file = await entry.getFile();
           const name = entry.name.replace(/\.[^.]+$/, '');
-          tracks.push({ name, category: categorize(name), url: URL.createObjectURL(file) });
+          tracks.push({ name, category: this.catFor(name), url: URL.createObjectURL(file) });
         }
       }
     } catch (e) { console.error(e); }
@@ -716,7 +721,7 @@ class Component extends DCLogic {
     for (const file of fileList) {
       if (!/\.(mp3|ogg|wav|m4a|flac|aac)$/i.test(file.name)) continue;
       const name = file.name.replace(/\.[^.]+$/, '');
-      more.push({ name, category: categorize(name), url: URL.createObjectURL(file) });
+      more.push({ name, category: this.catFor(name), url: URL.createObjectURL(file) });
     }
     if (!more.length) return;
     this.setState(s => {
@@ -729,6 +734,14 @@ class Component extends DCLogic {
   }
   tracksIn(cat) { return this.state.tracks.filter(t => t.category === cat); }
   trackByName(n) { return this.state.tracks.find(t => t.name === n) || null; }
+  catFor(name) { return this.state.catOverrides[name] || categorize(name); }
+  loadCatOverrides() { try { const o = JSON.parse(localStorage.getItem('dmscreen.catOverrides') || '{}'); if (o && typeof o === 'object') this.setState({ catOverrides: o }); } catch (e) {} }
+  setTrackCat(name, cat) {
+    const over = { ...this.state.catOverrides, [name]: cat };
+    try { localStorage.setItem('dmscreen.catOverrides', JSON.stringify(over)); } catch (e) {}
+    this.setState(s => ({ catOverrides: over, tracks: s.tracks.map(t => t.name === name ? { ...t, category: cat } : t) }));
+    this.syncLayers();
+  }
 
   /* --- Music player (foreground, one track at a time) ----------------------- */
   playTrack(i) {
@@ -862,6 +875,7 @@ class Component extends DCLogic {
   toggleBeat(i) { this.setState(s => ({ beats: s.beats.map((b, j) => j === i ? { ...b, done: !b.done } : b) })); this.persistNotes(); }
   removeBeat(i) { this.setState(s => ({ beats: s.beats.filter((b, j) => j !== i) })); this.persistNotes(); }
   addBeat() { this.setState(s => ({ beats: [...s.beats, { name: '', done: false }] })); this.persistNotes(); }
+  addNote(text) { if (!text) return; this.setState(s => ({ beats: [...s.beats, { name: text, done: false }] })); this.persistNotes(); this.logIt('Added to notes: ' + text); }
 
   /* --- Prefab tiles: dropping a prefab adds a real, movable tile ------------ */
   dropPrefab(p) {
@@ -873,8 +887,52 @@ class Component extends DCLogic {
       extraTiles: [...s.extraTiles, { id, name: p.name, count: p.count, x: 300 + (n % 5) * 26, y: 210 + (n % 5) * 26 }]
     }));
     this.logIt('Dropped prefab “' + p.name + '” (' + p.count + ')');
+    this.saveCurrentLayout();
   }
-  closeTile(id) { this.setState(s => ({ extraTiles: s.extraTiles.filter(t => t.id !== id) })); }
+  closeTile(id) { this.setState(s => ({ extraTiles: s.extraTiles.filter(t => t.id !== id) })); this.saveCurrentLayout(); }
+
+  /* --- Per-screen tile layouts --------------------------------------------- */
+  // Fixed-tile positions live in the DOM (dragging writes style.left/top), so a
+  // layout snapshots those plus the current spawned-tile list.
+  captureLayout() {
+    const pos = {};
+    document.querySelectorAll('[data-tile]').forEach(el => {
+      const id = el.getAttribute('data-tile');
+      if (id === 'cast') return;
+      pos[id] = { left: el.style.left, top: el.style.top };
+    });
+    return { pos, extra: this.state.extraTiles };
+  }
+  applyLayoutPositions(layout) {
+    const pos = (layout && layout.pos) || (this._defaultLayout && this._defaultLayout.pos) || {};
+    document.querySelectorAll('[data-tile]').forEach(el => {
+      const id = el.getAttribute('data-tile');
+      if (id === 'cast') return;
+      const p = pos[id] || (this._defaultLayout && this._defaultLayout.pos[id]);
+      if (p && p.left) { el.style.left = p.left; el.style.top = p.top; }
+    });
+  }
+  loadLayouts() { try { const l = JSON.parse(localStorage.getItem('dmscreen.layouts') || '{}'); if (l && typeof l === 'object') this.setState({ layouts: l }); } catch (e) {} }
+  persistLayouts() { try { localStorage.setItem('dmscreen.layouts', JSON.stringify(this.state.layouts)); } catch (e) {} }
+  saveCurrentLayout() {
+    const cur = this.captureLayout();
+    this.setState(s => ({ layouts: { ...s.layouts, [s.screen]: cur } }));
+    this.persistLayouts();
+  }
+  switchScreen(key, closePalette) {
+    if (this.state.screen === key) { if (closePalette) this.setState({ paletteOpen: false }); return; }
+    const cur = this.captureLayout();
+    const next = this.state.layouts[key];
+    const t = this.clockShort();
+    const name = (SCREENS.find(x => x.key === key) || { name: key }).name;
+    this.setState(s => ({
+      layouts: { ...s.layouts, [s.screen]: cur }, screen: key, extraTiles: next ? next.extra : [],
+      ...(closePalette ? { paletteOpen: false } : {}),
+      log: [...s.log, { t, text: 'Switched to screen “' + name + '”' }].slice(-40)
+    }));
+    this.persistLayouts();
+    this._applyPending = key;   // positions applied after the render (componentDidUpdate)
+  }
 
   /* --- Rulebook: render a real PDF the user loads (via pdf.js) --------------- */
   loadPdfFile(file) {
@@ -957,6 +1015,13 @@ class Component extends DCLogic {
   componentDidUpdate() {
     if (this.pal && document.activeElement !== this.pal) this.pal.focus();
     if (this.state.castOn) this.updatePop();
+    // Snapshot the default (template) tile positions once, then restore any
+    // saved layout for the screen we're on.
+    if (!this._defaultLayout) {
+      this._defaultLayout = this.captureLayout();
+      if (this.state.layouts[this.state.screen]) this.applyLayoutPositions(this.state.layouts[this.state.screen]);
+    }
+    if (this._applyPending) { const k = this._applyPending; this._applyPending = null; this.applyLayoutPositions(this.state.layouts[k]); }
   }
 
   _drag(root) {
@@ -978,7 +1043,7 @@ class Component extends DCLogic {
         tile.style.left = Math.max(0, x) + 'px';
         tile.style.top = Math.max(0, y) + 'px';
       };
-      const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); };
+      const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); this.saveCurrentLayout(); };
       document.addEventListener('pointermove', move);
       document.addEventListener('pointerup', up);
     });
@@ -1013,7 +1078,7 @@ class Component extends DCLogic {
       const i = RULES.indexOf(r);
       this.setState(s => ({ excerpt: i, book: Math.max(0, books.indexOf(r.book)), paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in a tile' }].slice(-40) }));
     } else if (r.kind === 'screen') {
-      this.setState(s => ({ screen: r._screen, paletteOpen: false, log: [...s.log, { t, text: 'Switched to screen “' + r.title + '”' }].slice(-40) }));
+      this.switchScreen(r._screen, true);
     } else if (r.kind === 'tile') {
       const p = r._prefab, n = this.state.extraTiles.length, id = 'T' + this.state.tileSeq;
       this.setState(s => ({ paletteOpen: false, tileSeq: s.tileSeq + 1, tiles: s.tiles + parseInt(p.count, 10), extraTiles: [...s.extraTiles, { id, name: p.name, count: p.count, x: 300 + (n % 5) * 26, y: 210 + (n % 5) * 26 }], log: [...s.log, { t, text: 'Dropped prefab “' + p.name + '” (' + p.count + ')' }].slice(-40) }));
@@ -1092,7 +1157,7 @@ class Component extends DCLogic {
         ...x, key: x.key,
         audio: active && s.sounds.some(y => y.on),
         style: 'display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: ' + (active ? '#1c1730' : 'transparent') + '; border: 0; border-left: 2px solid ' + (active ? '#8f7ad6' : 'transparent') + '; border-radius: 5px; color: ' + (active ? '#e6e9ee' : '#a7b0bc') + '; font-family: inherit; font-size: 12px; cursor: pointer;',
-        pick: () => { if (this.state.screen === x.key) return; this.setState({ screen: x.key }); this.logIt('Switched to screen \u201c' + x.name + '\u201d'); }
+        pick: () => this.switchScreen(x.key)
       };
     });
 
@@ -1109,9 +1174,10 @@ class Component extends DCLogic {
     // Music: categories present in the library, and the filtered track rows.
     const presentCats = MUSIC_CATS.filter(c => s.tracks.some(t => t.category === c));
     const musicList = s.tracks.map((t, i) => ({ t, i })).filter(o => s.musicCat === 'All' || o.t.category === s.musicCat).map(o => ({
-      name: o.t.name, cat: o.t.category, playing: o.i === s.nowPlaying,
+      name: o.t.name, cat: o.t.category, playing: o.i === s.nowPlaying, allCats: MUSIC_CATS,
       play: () => this.playTrack(o.i),
-      rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border: 0; border-radius: 5px; text-align: left; cursor: pointer; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? '#1c1730' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? '#c4b2ff' : '#a7b0bc') + ';'
+      setCat: e => this.setTrackCat(o.t.name, e.target.value),
+      rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border-radius: 5px; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? '#1c1730' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? '#c4b2ff' : '#a7b0bc') + ';'
     }));
 
     return {
@@ -1264,7 +1330,8 @@ class Component extends DCLogic {
       rolls: s.rolls,
       gens: s.gens.map((g, i) => ({
         name: g.name, value: g.value,
-        roll: () => { const pool = i === 0 ? NAMES : i === 1 ? LOOT : ENC; const v = pool[Math.floor(Math.random() * pool.length)]; this.setState(st => ({ gens: st.gens.map((x, j) => j === i ? { ...x, value: v } : x) })); this.logIt(g.name + ': ' + v); }
+        roll: () => { const pool = i === 0 ? NAMES : i === 1 ? LOOT : ENC; const v = pool[Math.floor(Math.random() * pool.length)]; this.setState(st => ({ gens: st.gens.map((x, j) => j === i ? { ...x, value: v } : x) })); this.logIt(g.name + ': ' + v); },
+        toNotes: () => this.addNote(g.value)
       })),
 
       party: [
