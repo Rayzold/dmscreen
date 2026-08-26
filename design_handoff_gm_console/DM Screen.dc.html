@@ -597,7 +597,7 @@
   <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closePalette }}" style="position: fixed; inset: 0; background: rgba(6,8,11,.62); backdrop-filter: blur(3px); z-index: 90; display: flex; justify-content: center; padding-top: 96px;">
       <div onClick="{{ stop }}" style="width: 620px; max-height: 460px; background: #14181d; border: 1px solid #333b47; border-radius: 13px; box-shadow: 0 30px 80px rgba(0,0,0,.75); display: flex; flex-direction: column; overflow: hidden;">
-        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onPaletteKey }}" aria-label="Search rules, screens, tiles and monsters" placeholder="Search across 9 loaded PDFs, screens, tiles and monsters…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
+        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onPaletteKey }}" aria-label="Search rules, screens, tiles, monsters and Notion pages" placeholder="Search rules, screens, tiles, monsters, Notion pages…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
         <div role="listbox" aria-label="Search results" style="overflow: auto; padding: 6px;">
           <sc-for list="{{ results }}" as="r" hint-placeholder-count="6">
             <button onClick="{{ r.open }}" role="option" aria-selected="{{ r.selected }}" style="{{ r.rowStyle }}" style-hover="background: #1c222a;">
@@ -658,8 +658,21 @@ const PREFABS = [
   { name: 'The Citadel', count: '9 tiles' }
 ];
 // External links surfaced in the command palette (open in a new tab).
+// The Scarred Lands campaign hub and all of its category pages in Notion.
 const LINKS = [
-  { title: 'The Scarred Lands — Campaign Hub', sub: 'Notion · your campaign notes', url: 'https://www.notion.so/355414fb2dda8106a273cf4cc9a08ae7' }
+  { title: '🗡️ The Scarred Lands — Campaign Hub', sub: 'Notion · campaign home', url: 'https://www.notion.so/355414fb2dda8106a273cf4cc9a08ae7' },
+  { title: '👥 NPCs', sub: 'Notion · characters met or heard of', url: 'https://www.notion.so/b36657deb5f74b6fb0cad4e268400a1f' },
+  { title: '🗺️ Locations', sub: 'Notion · cities, ruins, regions', url: 'https://www.notion.so/6b70ba80007a41e897693586a5b1bcef' },
+  { title: '⚔️ Factions', sub: 'Notion · groups and their agendas', url: 'https://www.notion.so/4d21d19a7f3a4ec7a780cde4568a4896' },
+  { title: '📅 Sessions Log', sub: 'Notion · recap of every session', url: 'https://www.notion.so/434960a7acbb47a19c264648a65f2bee' },
+  { title: '📜 Quests', sub: 'Notion · active, completed, failed', url: 'https://www.notion.so/9fe438d5113549ff9efe43ed6442a44b' },
+  { title: '🎒 Items & Loot', sub: 'Notion · artifacts and treasure', url: 'https://www.notion.so/64d3d35b785d48d7b1e3f3230bca914d' },
+  { title: '🐉 Bestiary', sub: 'Notion · monsters and their stats', url: 'https://www.notion.so/c41ec0fbe8624e87a3f9e23d73cba163' },
+  { title: '🌍 World Lore', sub: 'Notion · history and deep lore', url: 'https://www.notion.so/355414fb2dda81829cf8fb0c5232baa0' },
+  { title: '⚙️ World Mechanics', sub: 'Notion · rules and systems', url: 'https://www.notion.so/355414fb2dda81718058f7e6124700c0' },
+  { title: '📅 Calendar & Holidays', sub: 'Notion · in-world calendar', url: 'https://www.notion.so/355414fb2dda819d92c3c5095e5a3028' },
+  { title: '🎮 Session Zero Guide', sub: 'Notion · session zero', url: 'https://www.notion.so/363414fb2dda81f1bb11dca6108c4db7' },
+  { title: '🕸️ NPC Relationship Web', sub: 'Notion · how the NPCs connect', url: 'https://www.notion.so/363414fb2dda810d9436d15cd5173e30' }
 ];
 
 // --- Music library helpers ------------------------------------------------
