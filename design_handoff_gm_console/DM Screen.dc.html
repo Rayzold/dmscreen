@@ -30,20 +30,27 @@
 <x-dc>
 <helmet>
 <style>
+  /* Accent palette — themable at runtime (setAccent writes these on <html>).
+     Defaults are the original violet so the very first paint is correct. */
+  :root {
+    --acc-bright: #a78bfa; --acc-solid: #8f7ad6; --acc-light: #c4b2ff; --acc-deep: #6d5bb5;
+    --acc-border: #46375f; --acc-hover: #4a3f6b; --acc-bg: #22192e; --acc-bg2: #2c2140;
+    --acc-row: #1c1730; --acc-sel: #3a3352; --acc-rgb: 167,139,250;
+  }
   html, body { margin: 0; padding: 0; background: #0d1013; }
   * { box-sizing: border-box; }
-  a { color: #a78bfa; text-decoration: none; }
-  a:hover { color: #c4b2ff; }
+  a { color: var(--acc-bright); text-decoration: none; }
+  a:hover { color: var(--acc-light); }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-thumb { background: #2b333d; border-radius: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   @keyframes om-pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
-  @keyframes om-ring { 0% { box-shadow: 0 0 0 0 rgba(167,139,250,.55); } 100% { box-shadow: 0 0 0 12px rgba(167,139,250,0); } }
-  input[type=range] { accent-color: #8f7ad6; }
+  @keyframes om-ring { 0% { box-shadow: 0 0 0 0 rgba(var(--acc-rgb),.55); } 100% { box-shadow: 0 0 0 12px rgba(var(--acc-rgb),0); } }
+  input[type=range] { accent-color: var(--acc-solid); }
 
   /* Keyboard focus ring — the app's controls are custom-styled and otherwise
      give no visible focus. Only shows for keyboard users (:focus-visible). */
-  :focus-visible { outline: 2px solid #a78bfa; outline-offset: 2px; border-radius: 4px; }
+  :focus-visible { outline: 2px solid var(--acc-bright); outline-offset: 2px; border-radius: 4px; }
 
   /* Help marks — a small "?" beside a feature; hover (or long-press) shows a
      native tooltip explaining what it does. Kept subtle so it never competes
@@ -52,7 +59,7 @@
     border-radius: 50%; border: 1px solid #2b333d; color: #6f7987; font-size: 9px;
     font-weight: 700; line-height: 1; cursor: help; flex: none; user-select: none;
     vertical-align: middle; }
-  .help:hover { border-color: #4a3f6b; color: #c4b2ff; }
+  .help:hover { border-color: var(--acc-hover); color: var(--acc-light); }
 
   /* Respect users who ask for less motion: freeze the pulsing dots/rings. */
   @media (prefers-reduced-motion: reduce) {
@@ -77,7 +84,7 @@
 
   <header style="display: flex; align-items: center; gap: 18px; padding: 0 14px; background: #12161b; border-bottom: 1px solid #232a33;">
     <div style="display: flex; align-items: center; gap: 9px; white-space: nowrap; flex: none;">
-      <div style="width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, #a78bfa, #6d5bb5); display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #14101f;">D</div>
+      <div style="width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, var(--acc-bright), var(--acc-deep)); display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #14101f;">D</div>
       <div style="font-weight: 600; letter-spacing: -.01em;">Ashes of the Vell Road</div>
       <div style="color: #6f7987; font-size: 11px; padding-top: 1px;">Session 14</div>
     </div>
@@ -118,17 +125,25 @@
             <option value="">Campaigns…</option>
             <sc-for list="{{ campaignNames }}" as="c" hint-placeholder-count="2"><option value="{{ c }}">{{ c }}</option></sc-for>
           </select>
-          <button onClick="{{ saveCampaign }}" style="height: 24px; padding: 0 8px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="background: #2c2140;" title="Save the current session as a campaign">save</button>
+          <button onClick="{{ saveCampaign }}" style="height: 24px; padding: 0 8px; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="background: var(--acc-bg2);" title="Save the current session as a campaign">save</button>
         </div>
         <div style="display: flex; gap: 4px; margin-top: 4px;">
-          <button onClick="{{ exportCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Download the current session as a .json file">⭳ export</button>
-          <button onClick="{{ importCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Load a campaign from a .json file">⭱ import</button>
+          <button onClick="{{ exportCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Download the current session as a .json file">⭳ export</button>
+          <button onClick="{{ importCampaign }}" style="flex: 1; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Load a campaign from a .json file">⭱ import</button>
           <sc-if value="{{ canDeleteCampaign }}" hint-placeholder-val="{{ false }}">
             <button onClick="{{ deleteCampaign }}" style="width: 24px; height: 22px; background: #211514; border: 1px solid #452a26; border-radius: 6px; color: #e08d7c; font-family: inherit; font-size: 11px; cursor: pointer;" title="Delete the selected campaign">✕</button>
           </sc-if>
         </div>
         <input ref="{{ importRef }}" type="file" accept="application/json,.json" onChange="{{ onImportFile }}" style="display: none;">
         <button onClick="{{ openCampaignNotion }}" style="width: 100%; margin-top: 4px; height: 22px; background: none; border: 1px solid #2b333d; border-radius: 6px; color: #7fb4c4; font-family: inherit; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;" style-hover="border-color: #3a5560; background: #101a1e;" title="Open your Notion campaign hub in a new tab">Campaign hub in Notion ↗</button>
+      </div>
+      <div style="padding: 10px 10px 0;">
+        <div style="display: flex; align-items: center; gap: 5px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; margin-bottom: 6px;">Accent<span class="help" title="Recolour the whole console. Your choice is remembered on this device.">?</span></div>
+        <div style="display: flex; gap: 7px;">
+          <sc-for list="{{ accents }}" as="a" hint-placeholder-count="5">
+            <button onClick="{{ a.pick }}" style="{{ a.style }}" title="{{ a.name }}"></button>
+          </sc-for>
+        </div>
       </div>
       <div style="padding: 10px;">
         <input value="{{ navQuery }}" onChange="{{ onNavQuery }}" placeholder="Filter screens…" title="Type to filter the screen list below by name (case-insensitive)." style="width: 100%; height: 28px; padding: 0 9px; background: #0d1013; border: 1px solid #262d36; border-radius: 7px; color: #e6e9ee; font-family: inherit; font-size: 12px; outline: none;">
@@ -150,8 +165,8 @@
       <div style="display: flex; align-items: center; gap: 5px; padding: 14px 10px 6px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Prefabs<span class="help" title="Reusable tile bundles. Drop one to place a real, movable tile on the canvas (drag its header to position it; ✕ to remove) — the count shows how many tiles the bundle represents.">?</span></div>
       <div style="padding: 0 10px; display: flex; flex-direction: column; gap: 4px;">
         <sc-for list="{{ prefabs }}" as="p" hint-placeholder-count="4">
-          <button onClick="{{ p.drop }}" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #161b21; border: 1px solid #232a33; border-radius: 7px; color: #c3cad4; font-family: inherit; font-size: 12px; cursor: pointer; text-align: left;" style-hover="border-color: #4a3f6b; color: #e6e9ee;">
-            <span style="color: #8f7ad6;">◧</span>
+          <button onClick="{{ p.drop }}" style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #161b21; border: 1px solid #232a33; border-radius: 7px; color: #c3cad4; font-family: inherit; font-size: 12px; cursor: pointer; text-align: left;" style-hover="border-color: var(--acc-hover); color: #e6e9ee;">
+            <span style="color: var(--acc-solid);">◧</span>
             <span style="flex: 1;">{{ p.name }}</span>
             <span style="color: #5f6875; font-size: 10px;">{{ p.count }}</span>
           </button>
@@ -167,12 +182,12 @@
           <button onClick="{{ toggleMute }}" style="{{ muteBtn }}" title="Mute all sound — shortcut: M">{{ muteLabel }}</button>
         </div>
         <div style="display: flex; gap: 5px; align-items: center;">
-          <button onClick="{{ pickFolder }}" style="flex: 1; height: 26px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; cursor: pointer;" style-hover="background: #2c2140;" title="Pick your music folder (remembered next time)">Load folder</button>
-          <button onClick="{{ addSongs }}" style="width: 26px; height: 26px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 13px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add individual song files">＋</button>
+          <button onClick="{{ pickFolder }}" style="flex: 1; height: 26px; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 11px; cursor: pointer;" style-hover="background: var(--acc-bg2);" title="Pick your music folder (remembered next time)">Load folder</button>
+          <button onClick="{{ addSongs }}" style="width: 26px; height: 26px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 13px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Add individual song files">＋</button>
         </div>
         <div style="margin-top: 5px; font-size: 10px; color: #5f6875;">{{ libLabel }}</div>
         <sc-if value="{{ showReconnect }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ grantReconnect }}" style="width: 100%; margin-top: 5px; height: 24px; background: #2c2140; border: 1px solid #6d5bb5; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 10.5px; cursor: pointer;">Reconnect remembered folder</button>
+          <button onClick="{{ grantReconnect }}" style="width: 100%; margin-top: 5px; height: 24px; background: var(--acc-bg2); border: 1px solid var(--acc-deep); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 10.5px; cursor: pointer;">Reconnect remembered folder</button>
         </sc-if>
         <sc-if value="{{ hasTracks }}" hint-placeholder-val="{{ true }}">
           <select value="{{ musicCat }}" onChange="{{ onMusicCat }}" style="width: 100%; margin-top: 7px; height: 26px; background: #0d1013; border: 1px solid #262d36; border-radius: 6px; color: #e6e9ee; font-family: inherit; font-size: 11px;">
@@ -180,7 +195,7 @@
           </select>
           <div style="display: flex; align-items: center; gap: 6px; margin-top: 7px;">
             <button onClick="{{ prevMusic }}" style="width: 24px; height: 24px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;">⏮</button>
-            <button onClick="{{ toggleMusic }}" style="width: 28px; height: 24px; background: #22192e; border: 1px solid #46375f; border-radius: 5px; color: #c4b2ff; font-family: inherit; cursor: pointer;">{{ playIcon }}</button>
+            <button onClick="{{ toggleMusic }}" style="width: 28px; height: 24px; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 5px; color: var(--acc-light); font-family: inherit; cursor: pointer;">{{ playIcon }}</button>
             <button onClick="{{ nextMusic }}" style="width: 24px; height: 24px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;">⏭</button>
             <span style="flex: 1; min-width: 0; font-size: 11px; color: #c3cad4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ nowPlayingName }}">{{ nowPlayingName }}</span>
           </div>
@@ -209,7 +224,7 @@
             <option value="">Presets…</option>
             <sc-for list="{{ presetNames }}" as="p" hint-placeholder-count="2"><option value="{{ p }}">{{ p }}</option></sc-for>
           </select>
-          <button onClick="{{ savePreset }}" style="height: 24px; padding: 0 8px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Save the current mix as a preset">save</button>
+          <button onClick="{{ savePreset }}" style="height: 24px; padding: 0 8px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 10px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Save the current mix as a preset">save</button>
           <sc-if value="{{ canDeletePreset }}" hint-placeholder-val="{{ false }}">
             <button onClick="{{ deletePreset }}" style="width: 24px; height: 24px; background: #211514; border: 1px solid #452a26; border-radius: 6px; color: #e08d7c; font-family: inherit; font-size: 11px; cursor: pointer;" title="Delete the selected preset">✕</button>
           </sc-if>
@@ -222,7 +237,7 @@
                 <select value="{{ l.category }}" onChange="{{ l.setCat }}" style="flex: 1; min-width: 0; height: 22px; background: #0d1013; border: 1px solid #262d36; border-radius: 5px; color: #c3cad4; font-family: inherit; font-size: 10.5px;">
                   <sc-for list="{{ l.cats }}" as="c" hint-placeholder-count="6"><option value="{{ c }}">{{ c }}</option></sc-for>
                 </select>
-                <button onClick="{{ l.reshuffle }}" style="width: 22px; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #8f7ad6; font-family: inherit; font-size: 11px; cursor: pointer;" title="Shuffle to another track in this category">⟳</button>
+                <button onClick="{{ l.reshuffle }}" style="width: 22px; height: 22px; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: var(--acc-solid); font-family: inherit; font-size: 11px; cursor: pointer;" title="Shuffle to another track in this category">⟳</button>
                 <button onClick="{{ l.remove }}" style="width: 22px; height: 22px; background: none; border: 1px solid #2b333d; border-radius: 5px; color: #6f7987; font-family: inherit; font-size: 11px; cursor: pointer;" title="Remove this layer">✕</button>
               </div>
               <div style="display: flex; align-items: center; gap: 6px; padding-left: 15px;">
@@ -232,7 +247,7 @@
             </div>
           </sc-for>
         </div>
-        <button onClick="{{ addLayer }}" style="width: 100%; margin-top: 9px; height: 24px; background: #191f26; border: 1px dashed #3a434e; border-radius: 6px; color: #8b95a3; font-family: inherit; font-size: 10.5px; cursor: pointer;" style-hover="border-color: #4a3f6b; color: #c3cad4;">＋ Add layer</button>
+        <button onClick="{{ addLayer }}" style="width: 100%; margin-top: 9px; height: 24px; background: #191f26; border: 1px dashed #3a434e; border-radius: 6px; color: #8b95a3; font-family: inherit; font-size: 10.5px; cursor: pointer;" style-hover="border-color: var(--acc-hover); color: #c3cad4;">＋ Add layer</button>
       </div>
 
       <audio ref="{{ musicRef }}"></audio>
@@ -245,7 +260,7 @@
 
       <sc-if value="{{ isPrep }}" hint-placeholder-val="{{ false }}">
         <div style="position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: rgba(18,22,27,.94); border-bottom: 1px solid #232a33; backdrop-filter: blur(6px); color: #8b95a3; font-size: 11px;">
-          <span style="color: #a78bfa; font-weight: 600;">Prep mode</span>
+          <span style="color: var(--acc-bright); font-weight: 600;">Prep mode</span>
           <span>snap 28px · collision on · handles shown</span>
           <span style="flex: 1;"></span>
           <span>Drag any tile header to move it</span>
@@ -256,7 +271,7 @@
 
         <section data-tile="map" style="position: absolute; left: 20px; top: 18px; width: 540px; height: 404px; background: #14181d; border: 1px solid {{ mapBorder }}; border-radius: 11px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; flex-direction: column;">
           <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
-            <span style="color: #8f7ad6; font-size: 11px;">▢</span>
+            <span style="color: var(--acc-solid); font-size: 11px;">▢</span>
             <span style="font-size: 11px; font-weight: 600;">Improvised — Vell Road Shrine</span>
             <span class="help" title="The map surface is a live, generated world from Hexwright (embedded). Combat tokens sit on top, placed by initiative order; the tile's frame turns violet on a hostile's turn and slate on a PC's. Click any token to select that combatant and open its sheet. Drag the header to move the tile (snaps to a 28px grid; hold Alt to place freely).">?</span>
             <span style="flex: 1;"></span>
@@ -326,7 +341,7 @@
             <sc-if value="{{ hasConds }}" hint-placeholder-val="{{ false }}">
               <div style="margin-top: 7px; display: flex; flex-direction: column; gap: 4px;">
                 <sc-for list="{{ activeConds }}" as="c" hint-placeholder-count="1">
-                  <div style="display: flex; align-items: center; gap: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: #c4b2ff;">
+                  <div style="display: flex; align-items: center; gap: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; color: var(--acc-light);">
                     <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.name }}</span>
                     <button onClick="{{ c.setInf }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; font-size: 10px; cursor: pointer;" title="No timer (indefinite)">∞</button>
                     <button onClick="{{ c.less }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; cursor: pointer;">−</button>
@@ -340,12 +355,12 @@
 
             <div style="margin-top: 13px; display: flex; align-items: center; gap: 6px;">
               <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">Attacks</span>
-              <button onClick="{{ addAttack }}" style="background: none; border: 0; color: #8f7ad6; font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;" title="Add an attack">＋ add</button>
+              <button onClick="{{ addAttack }}" style="background: none; border: 0; color: var(--acc-solid); font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;" title="Add an attack">＋ add</button>
             </div>
             <div style="margin-top: 5px; display: flex; flex-direction: column; gap: 5px; font-family: 'Space Grotesk', sans-serif;">
               <sc-for list="{{ selAttacks }}" as="a" hint-placeholder-count="2">
                 <div style="display: flex; align-items: center; gap: 5px;">
-                  <button onClick="{{ a.roll }}" style="flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; height: 26px; padding: 0 8px; background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; cursor: pointer; text-align: left;" style-hover="background: #2c2140;" title="Roll to-hit and damage into the log">
+                  <button onClick="{{ a.roll }}" style="flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; height: 26px; padding: 0 8px; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 11px; cursor: pointer; text-align: left;" style-hover="background: var(--acc-bg2);" title="Roll to-hit and damage into the log">
                     <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.name }}</span>
                     <span style="color: #8b95a3; font-size: 10px;">{{ a.hitLabel }} · {{ a.dmg }}</span>
                     <span style="font-size: 11px;">⚄</span>
@@ -367,7 +382,7 @@
             <div style="margin-top: 13px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Saves &amp; checks</div>
             <div style="margin-top: 5px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; font-family: 'Space Grotesk', sans-serif;">
               <sc-for list="{{ saves }}" as="a" hint-placeholder-count="6">
-                <button onClick="{{ a.roll }}" style="display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 0; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Roll a d20 save/check (uses the advantage setting)">
+                <button onClick="{{ a.roll }}" style="display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 3px 0; background: #191f26; border: 1px solid #2b333d; border-radius: 5px; color: #c3cad4; font-family: inherit; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Roll a d20 save/check (uses the advantage setting)">
                   <span style="font-size: 9px; font-weight: 600; letter-spacing: .04em;">{{ a.abbr }}</span>
                   <span style="font-size: 10px; color: #8b95a3; font-variant-numeric: tabular-nums;">{{ a.modLabel }}</span>
                 </button>
@@ -383,6 +398,30 @@
               <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: none;">Conc</span>
               <input value="{{ selConc }}" onChange="{{ onConc }}" placeholder="spell (blank = none)" style="flex: 1; min-width: 0; height: 20px; background: #0d1013; border: 1px solid {{ concBorder }}; border-radius: 5px; color: #c3cad4; font-family: 'Space Grotesk', sans-serif; font-size: 10.5px; padding: 0 6px; outline: none;">
             </div>
+
+            <sc-if value="{{ legShow }}" hint-placeholder-val="{{ false }}">
+              <sc-if value="{{ legHas }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top: 13px;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">Legendary <span class="help" title="A boss's per-round pool of legendary actions. Set how many with −/＋, click a pip or 'spend' to use one, ↺ to refresh. It refills automatically at the start of this creature's turn, and the count shows on its initiative row (◈).">?</span></span>
+                    <button onClick="{{ legLess }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; cursor: pointer;" title="Fewer per round">−</button>
+                    <span style="width: 16px; text-align: center; font-variant-numeric: tabular-nums;">{{ legMax }}</span>
+                    <button onClick="{{ legAdd }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; cursor: pointer;" title="More per round">＋</button>
+                    <button onClick="{{ legRefresh }}" style="width: 18px; height: 18px; background: none; border: 1px solid #2b333d; border-radius: 4px; color: #8b95a3; font-family: inherit; font-size: 11px; cursor: pointer;" title="Refresh now (also automatic at the start of its turn)">↺</button>
+                  </div>
+                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; gap: 5px;">
+                      <sc-for list="{{ legPips }}" as="p" hint-placeholder-count="3"><span style="{{ p.style }}"></span></sc-for>
+                    </div>
+                    <span style="flex: 1;"></span>
+                    <button onClick="{{ legSpend }}" style="height: 22px; padding: 0 10px; background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 10.5px; cursor: pointer;" style-hover="background: var(--acc-bg2);" title="Spend one legendary action">spend</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ legNone }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ legAdd }}" style="margin-top: 12px; background: none; border: 0; color: var(--acc-solid); font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;" title="Give this creature a per-round pool of legendary actions">＋ legendary actions</button>
+              </sc-if>
+            </sc-if>
           </div>
         </section>
 
@@ -391,7 +430,7 @@
             <sc-for list="{{ books }}" as="b" hint-placeholder-count="3">
               <button onClick="{{ b.pick }}" style="{{ b.style }}">{{ b.name }}</button>
             </sc-for>
-            <button onClick="{{ openPdf }}" style="flex: none; padding: 0 10px; border: 0; border-left: 1px solid #232a33; background: #171c22; color: #8f7ad6; font-family: inherit; font-size: 11px; cursor: pointer;" title="Open a real PDF rulebook (rendered here, read locally)">PDF</button>
+            <button onClick="{{ openPdf }}" style="flex: none; padding: 0 10px; border: 0; border-left: 1px solid #232a33; background: #171c22; color: var(--acc-solid); font-family: inherit; font-size: 11px; cursor: pointer;" title="Open a real PDF rulebook (rendered here, read locally)">PDF</button>
           </div>
           <sc-if value="{{ pdfClosed }}" hint-placeholder-val="{{ true }}">
             <div style="padding: 13px 14px; overflow: auto; flex: 1; font-family: 'Crimson Pro', Georgia, serif;">
@@ -438,7 +477,7 @@
                 </div>
               </sc-for>
             </div>
-            <button onClick="{{ addBeat }}" style="margin-top: 8px; background: none; border: 0; color: #8f7ad6; font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;">＋ add beat</button>
+            <button onClick="{{ addBeat }}" style="margin-top: 8px; background: none; border: 0; color: var(--acc-solid); font-family: 'Space Grotesk', sans-serif; font-size: 11px; cursor: pointer; padding: 0;">＋ add beat</button>
             <div style="margin-top: 10px; color: #56606d; font-family: 'Space Grotesk', sans-serif; font-size: 11px;">Click any line to edit · saved on this device</div>
           </div>
         </section>
@@ -463,7 +502,7 @@
               </div>
               <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
                 <sc-for list="{{ dice }}" as="d" hint-placeholder-count="8">
-                  <button onClick="{{ d.roll }}" style="height: 30px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 11px; cursor: pointer;" style-hover="border-color: #4a3f6b; color: #e6e9ee;">{{ d.name }}</button>
+                  <button onClick="{{ d.roll }}" style="height: 30px; background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 11px; cursor: pointer;" style-hover="border-color: var(--acc-hover); color: #e6e9ee;">{{ d.name }}</button>
                 </sc-for>
               </div>
               <div style="margin-top: 11px; color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">History</div>
@@ -486,7 +525,7 @@
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; flex: 1;">{{ g.name }}</span>
                     <button onClick="{{ g.toNotes }}" style="background: #14201b; border: 1px solid #274539; border-radius: 5px; color: #74c3a7; font-family: inherit; font-size: 10px; padding: 2px 7px; cursor: pointer;" style-hover="background: #182a23;" title="Add this result to Scene notes as a beat">→ notes</button>
-                    <button onClick="{{ g.roll }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 5px; color: #c4b2ff; font-family: inherit; font-size: 10px; padding: 2px 7px; cursor: pointer;" style-hover="background: #2c2140;">roll</button>
+                    <button onClick="{{ g.roll }}" style="background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 5px; color: var(--acc-light); font-family: inherit; font-size: 10px; padding: 2px 7px; cursor: pointer;" style-hover="background: var(--acc-bg2);">roll</button>
                   </div>
                   <div style="margin-top: 5px; font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; line-height: 1.4; color: #e6e9ee;">{{ g.value }}</div>
                 </div>
@@ -499,7 +538,7 @@
         <sc-for list="{{ extraTiles }}" as="t" hint-placeholder-count="0">
           <section data-tile="{{ t.id }}" style="{{ t.style }}">
             <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #171c22; border-bottom: 1px solid #232a33; cursor: grab; flex: none;">
-              <span style="color: #8f7ad6; font-size: 11px;">◧</span>
+              <span style="color: var(--acc-solid); font-size: 11px;">◧</span>
               <span style="font-size: 11px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ t.name }}</span>
               <span style="color: #5f6875; font-size: 10px;">{{ t.count }}</span>
               <button onClick="{{ t.close }}" style="background: none; border: 0; color: #6f7987; font-size: 13px; cursor: pointer; padding: 0;" title="Remove tile">✕</button>
@@ -518,14 +557,15 @@
         <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant gets a violet accent bar and its map token rings — it auto-scrolls into view as turns advance; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through. 🐉 adds a monster from the bestiary with its initiative rolled; ＋ adds a blank combatant. ⌘Z undoes the last change; the fight is auto-saved and survives a refresh.">?</span>
         <span style="flex: 1;"></span>
         <button onClick="{{ openBestiary }}" style="background: #17210f; border: 1px solid #2e3d1c; border-radius: 6px; color: #9fce6b; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #46602a;" title="Add a monster from the bestiary (rolls its initiative)">🐉</button>
-        <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Sort the order by initiative (highest first)">↕</button>
-        <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a blank combatant to the initiative">＋</button>
-        <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
+        <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Sort the order by initiative (highest first)">↕</button>
+        <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Add a blank combatant to the initiative">＋</button>
+        <button onClick="{{ nextTurn }}" style="background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: var(--acc-bg2);" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
       </div>
 
       <div style="display: flex; gap: 6px; padding: 0 12px 7px;">
         <button onClick="{{ toggleDense }}" style="{{ denseBtn }}" title="Compact rows — fit more combatants on screen">{{ denseLabel }}</button>
         <button onClick="{{ toggleChime }}" style="{{ chimeBtn }}" title="Play a soft chime when the turn advances (respects mute)">{{ chimeLabel }}</button>
+        <button onClick="{{ toggleLair }}" style="{{ lairBtn }}" title="Lair actions: when on, a reminder is logged on initiative count 20 at the top of every round">{{ lairLabel }}</button>
       </div>
 
       <div style="padding: 0 8px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
@@ -538,6 +578,9 @@
                 <span style="display: flex; align-items: center; gap: 6px;">
                   <span style="{{ c.nameStyle }}">{{ c.name }}</span>
                   <span style="color: #6f7987; font-size: 10px;">{{ c.badge }}</span>
+                  <sc-if value="{{ c.hasLeg }}" hint-placeholder-val="{{ false }}">
+                    <span style="color: var(--acc-light); font-size: 9px; border: 1px solid var(--acc-border); border-radius: 3px; padding: 0 3px;" title="Legendary actions remaining this round">◈{{ c.legLeft }}</span>
+                  </sc-if>
                 </span>
                 <span style="height: 3px; background: #202730; border-radius: 2px; overflow: hidden;">
                   <span style="display: block; height: 100%; width: {{ c.pct }}%; background: {{ c.color }}; transition: width .18s ease;"></span>
@@ -589,10 +632,10 @@
   </footer>
 
   <sc-if value="{{ castFallback }}" hint-placeholder-val="{{ false }}">
-    <div data-tile="cast" style="position: fixed; right: 22px; bottom: 46px; width: 320px; background: #0b0e12; border: 1px solid #46375f; border-radius: 11px; box-shadow: 0 22px 60px rgba(0,0,0,.7); overflow: hidden; z-index: 60;">
-      <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; background: #191325; border-bottom: 1px solid #2f2545; cursor: grab;">
-        <span style="width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; animation: om-pulse 2s infinite;"></span>
-        <span style="font-size: 11px; font-weight: 600; color: #c4b2ff;">Player view · living room TV</span>
+    <div data-tile="cast" style="position: fixed; right: 22px; bottom: 46px; width: 320px; background: #0b0e12; border: 1px solid var(--acc-border); border-radius: 11px; box-shadow: 0 22px 60px rgba(0,0,0,.7); overflow: hidden; z-index: 60;">
+      <div data-grab="1" style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; background: var(--acc-row); border-bottom: 1px solid var(--acc-border); cursor: grab;">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--acc-bright); animation: om-pulse 2s infinite;"></span>
+        <span style="font-size: 11px; font-weight: 600; color: var(--acc-light);">Player view · living room TV</span>
         <span style="flex: 1;"></span>
         <button onClick="{{ toggleCast }}" style="background: none; border: 0; color: #6f7987; font-size: 13px; cursor: pointer;">✕</button>
       </div>
@@ -711,6 +754,17 @@ const MONSTERS = [
   { name: 'Ghoul', badge: 'undead', hp: 22, ac: 12, abil: { str: 1, dex: 2, con: 0, int: -2, wis: 0, cha: -2 }, attacks: [{ name: 'Claws', hit: 4, dmg: '2d4+2' }, { name: 'Bite', hit: 2, dmg: '2d6+2' }] }
 ];
 
+// Accent themes. Each is the full set of accent shades the UI paints with; the
+// keys map 1:1 to the --acc-* CSS variables applied to <html> at runtime.
+const ACCENTS = {
+  violet:  { label: 'Violet',  bright: '#a78bfa', solid: '#8f7ad6', light: '#c4b2ff', deep: '#6d5bb5', border: '#46375f', hover: '#4a3f6b', bg: '#22192e', bg2: '#2c2140', row: '#1c1730', sel: '#3a3352', rgb: '167,139,250' },
+  emerald: { label: 'Emerald', bright: '#45c99a', solid: '#3fae86', light: '#9fe6cd', deep: '#2f7d63', border: '#275046', hover: '#2f6455', bg: '#13261f', bg2: '#17322a', row: '#10201b', sel: '#2b4a40', rgb: '69,201,154' },
+  amber:   { label: 'Amber',   bright: '#e0b64f', solid: '#cf9f3f', light: '#f0d89f', deep: '#8a6a2f', border: '#4d3f1c', hover: '#64522a', bg: '#241f13', bg2: '#322a17', row: '#201b10', sel: '#4a402b', rgb: '224,182,79' },
+  crimson: { label: 'Crimson', bright: '#e07a7a', solid: '#cf5f5f', light: '#f0b0b0', deep: '#8a3535', border: '#4d2626', hover: '#64322a', bg: '#241414', bg2: '#321717', row: '#201010', sel: '#4a2b2b', rgb: '224,122,122' },
+  azure:   { label: 'Azure',   bright: '#5aa8e0', solid: '#4a90cf', light: '#a9d4f0', deep: '#2f5f8a', border: '#24384d', hover: '#2a4a64', bg: '#131e28', bg2: '#172a38', row: '#101a24', sel: '#2b3d4a', rgb: '90,168,224' }
+};
+const ACCENT_ORDER = ['violet', 'emerald', 'amber', 'crimson', 'azure'];
+
 // --- Music library helpers ------------------------------------------------
 const MUSIC_CATS = ['Combat', 'Boss', 'Tavern & Town', 'Dungeon', 'Horror', 'Tension', 'Ritual', 'Travel', 'Rest & Sorrow', 'Other'];
 // Guess a track's category from its filename (works with these libraries'
@@ -748,7 +802,8 @@ class Component extends DCLogic {
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
     leftOpen: true, rightOpen: true, undo: [], spawnHint: false,
-    flash: null, dense: false, chime: false,
+    flash: null, dense: false, chime: false, accent: 'violet',
+    lair: false,
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
@@ -1024,11 +1079,38 @@ class Component extends DCLogic {
     this.persistPanels();
   }
   loadPanels() {
-    try { const p = JSON.parse(localStorage.getItem('dmscreen.panels') || 'null'); if (p) this.setState({ leftOpen: p.leftOpen !== false, rightOpen: p.rightOpen !== false, dense: !!p.dense, chime: !!p.chime }); } catch (e) {}
+    try {
+      const p = JSON.parse(localStorage.getItem('dmscreen.panels') || 'null');
+      if (p) {
+        const accent = ACCENTS[p.accent] ? p.accent : 'violet';
+        this.setState({ leftOpen: p.leftOpen !== false, rightOpen: p.rightOpen !== false, dense: !!p.dense, chime: !!p.chime, accent });
+        this.applyAccent(accent);
+      }
+    } catch (e) {}
   }
   persistPanels() {
-    try { localStorage.setItem('dmscreen.panels', JSON.stringify({ leftOpen: this.state.leftOpen, rightOpen: this.state.rightOpen, dense: this.state.dense, chime: this.state.chime })); } catch (e) {}
+    try { localStorage.setItem('dmscreen.panels', JSON.stringify({ leftOpen: this.state.leftOpen, rightOpen: this.state.rightOpen, dense: this.state.dense, chime: this.state.chime, accent: this.state.accent })); } catch (e) {}
   }
+  // Write an accent theme's shades onto <html> as --acc-* CSS variables; every
+  // accent-coloured surface reads those, so the whole UI recolours instantly.
+  applyAccent(name) {
+    const A = ACCENTS[name] || ACCENTS.violet;
+    const r = document.documentElement.style;
+    r.setProperty('--acc-bright', A.bright); r.setProperty('--acc-solid', A.solid);
+    r.setProperty('--acc-light', A.light); r.setProperty('--acc-deep', A.deep);
+    r.setProperty('--acc-border', A.border); r.setProperty('--acc-hover', A.hover);
+    r.setProperty('--acc-bg', A.bg); r.setProperty('--acc-bg2', A.bg2);
+    r.setProperty('--acc-row', A.row); r.setProperty('--acc-sel', A.sel);
+    r.setProperty('--acc-rgb', A.rgb);
+    const meta = document.querySelector('meta[name=theme-color]'); if (meta) meta.setAttribute('content', A.deep);
+  }
+  setAccent(name) {
+    if (!ACCENTS[name]) return;
+    this.applyAccent(name);
+    this.setState({ accent: name });
+    this.persistPanels();
+  }
+  toggleLair() { this.setState(s => ({ lair: !s.lair })); this.persistEncounter(); this.logIt(this.state.lair ? 'Lair actions on (fires on initiative count 20)' : 'Lair actions off'); }
   toggleDense() { this.setState(s => ({ dense: !s.dense })); this.persistPanels(); }
   toggleChime() { this.setState(s => ({ chime: !s.chime })); this.persistPanels(); this.logIt(this.state.chime ? 'Turn chime on' : 'Turn chime off'); }
   // A short two-note chime synthesised with WebAudio (no asset). Honours mute.
@@ -1129,13 +1211,13 @@ class Component extends DCLogic {
   loadCampaignList() { try { const c = JSON.parse(localStorage.getItem('dmscreen.campaigns') || '{}'); if (c && typeof c === 'object') this.setState({ campaigns: c }); } catch (e) {} }
   snapshot() {
     const s = this.state;
-    return { v: 1, savedAt: Date.now(), combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel, screen: s.screen, extraTiles: s.extraTiles, layouts: s.layouts, noteTitle: s.noteTitle, noteBody: s.noteBody, beats: s.beats, sounds: s.sounds, catOverrides: s.catOverrides };
+    return { v: 1, savedAt: Date.now(), combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel, lair: s.lair, screen: s.screen, extraTiles: s.extraTiles, layouts: s.layouts, noteTitle: s.noteTitle, noteBody: s.noteBody, beats: s.beats, sounds: s.sounds, catOverrides: s.catOverrides };
   }
   applySnapshot(d) {
     if (!d || typeof d !== 'object') return;
     if (this._layerAudio) { for (const k in this._layerAudio) { try { this._layerAudio[k].pause(); } catch (e) {} } this._layerAudio = {}; }
     const patch = {};
-    ['combatants', 'turn', 'round', 'sel', 'screen', 'extraTiles', 'layouts', 'noteTitle', 'noteBody', 'beats', 'sounds', 'catOverrides'].forEach(k => { if (d[k] !== undefined) patch[k] = d[k]; });
+    ['combatants', 'turn', 'round', 'sel', 'lair', 'screen', 'extraTiles', 'layouts', 'noteTitle', 'noteBody', 'beats', 'sounds', 'catOverrides'].forEach(k => { if (d[k] !== undefined) patch[k] = d[k]; });
     patch.undo = [];   // a loaded campaign is a fresh baseline
     this.setState(patch);
     this.persistNotes(); this.persistLayouts(); this.persistEncounter();
@@ -1338,7 +1420,7 @@ class Component extends DCLogic {
     this.persistEncounter();
   }
   persistEncounter() {
-    try { const s = this.state; localStorage.setItem('dmscreen.encounter', JSON.stringify({ combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel })); } catch (e) {}
+    try { const s = this.state; localStorage.setItem('dmscreen.encounter', JSON.stringify({ combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel, lair: s.lair })); } catch (e) {}
   }
   loadEncounter() {
     try {
@@ -1346,7 +1428,7 @@ class Component extends DCLogic {
       if (e && Array.isArray(e.combatants) && e.combatants.length) {
         const turn = Math.min(Math.max(0, e.turn || 0), e.combatants.length - 1);
         const sel = e.combatants.some(c => c.id === e.sel) ? e.sel : e.combatants[turn].id;
-        this.setState({ combatants: e.combatants, turn, round: e.round || 1, sel });
+        this.setState({ combatants: e.combatants, turn, round: e.round || 1, sel, lair: !!e.lair });
       }
     } catch (e) {}
   }
@@ -1372,6 +1454,24 @@ class Component extends DCLogic {
       return { combatants, turn: i < 0 ? 0 : i, sel: id, paletteOpen: false, spawnHint: false,
         log: [...s.log, { t: this.clockShort(), text: 'Added ' + name + ' (init ' + init + ') from the bestiary' }].slice(-40) };
     });
+  }
+
+  /* --- Legendary actions (a per-round pool on a boss combatant) -------------- */
+  setLegendaryMax(delta) {
+    this.mutate(s => ({ combatants: s.combatants.map(c => {
+      if (c.id !== s.sel) return c;
+      const cur = c.legendary ? c.legendary.max : 0;
+      const max = Math.max(0, Math.min(5, cur + delta));
+      if (max === 0) { const nc = { ...c }; delete nc.legendary; return nc; }
+      const used = Math.min(c.legendary ? c.legendary.used : 0, max);
+      return { ...c, legendary: { max, used } };
+    }) }));
+  }
+  spendLegendary() {
+    this.mutate(s => ({ combatants: s.combatants.map(c => (c.id === s.sel && c.legendary && c.legendary.used < c.legendary.max) ? { ...c, legendary: { ...c.legendary, used: c.legendary.used + 1 } } : c) }));
+  }
+  refreshLegendary() {
+    this.mutate(s => ({ combatants: s.combatants.map(c => (c.id === s.sel && c.legendary) ? { ...c, legendary: { ...c.legendary, used: 0 } } : c) }));
   }
 
   // The command palette searches the real app, not a canned list: every rule,
@@ -1442,7 +1542,12 @@ class Component extends DCLogic {
       const round = n === 0 ? s.round + 1 : s.round;
       wrapped = n === 0;
       const c = s.combatants[n];
-      return { turn: n, round, sel: c.pc ? s.sel : c.id, log: [...s.log, { t: this.clockShort(), text: (n === 0 ? 'Round ' + round + ' \u2014 ' : '') + c.name + '\u2019s turn' }].slice(-40) };
+      // A creature's legendary actions refresh at the start of its turn; lair
+      // actions fire on initiative count 20 (modelled as the top of each round).
+      const combatants = s.combatants.map((x, i) => (i === n && x.legendary) ? { ...x, legendary: { ...x.legendary, used: 0 } } : x);
+      const lairLog = (wrapped && s.lair) ? [{ t: this.clockShort(), text: '\ud83c\udfdb Lair action \u2014 initiative count 20', hot: true }] : [];
+      return { turn: n, round, sel: c.pc ? s.sel : c.id, combatants,
+        log: [...s.log, ...lairLog, { t: this.clockShort(), text: (n === 0 ? 'Round ' + round + ' \u2014 ' : '') + c.name + '\u2019s turn' }].slice(-40) };
     });
     if (wrapped) this.tickConditions();   // count down timed conditions each new round
     this.playChime();
@@ -1658,18 +1763,18 @@ class Component extends DCLogic {
     const active = s.combatants[s.turn];
     const sel = s.combatants.find(c => c.id === s.sel) || active;
     const pct = c => Math.round((c.hp / c.max) * 100);
-    const col = c => c.hp === 0 ? '#5f6875' : c.hp <= c.max / 2 ? '#c9573f' : c.pc ? '#4fa88b' : '#8f7ad6';
+    const col = c => c.hp === 0 ? '#5f6875' : c.hp <= c.max / 2 ? '#c9573f' : c.pc ? '#4fa88b' : 'var(--acc-solid)';
     const m = Math.floor(s.secs / 60);
     const isPrep = s.mode === 'prep';
-    const tabBtn = on => 'flex: 1; background: ' + (on ? '#14181d' : 'transparent') + '; border: 0; border-bottom: 2px solid ' + (on ? '#8f7ad6' : 'transparent') + '; color: ' + (on ? '#e6e9ee' : '#6f7987') + '; font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer;';
-    const modeBtn = on => 'padding: 3px 12px; border: 0; border-radius: 6px; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#6f7987') + '; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer;';
+    const tabBtn = on => 'flex: 1; background: ' + (on ? '#14181d' : 'transparent') + '; border: 0; border-bottom: 2px solid ' + (on ? 'var(--acc-solid)' : 'transparent') + '; color: ' + (on ? '#e6e9ee' : '#6f7987') + '; font-family: inherit; font-size: 11px; font-weight: 500; cursor: pointer;';
+    const modeBtn = on => 'padding: 3px 12px; border: 0; border-radius: 6px; background: ' + (on ? 'var(--acc-bg)' : 'transparent') + '; color: ' + (on ? 'var(--acc-light)' : '#6f7987') + '; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer;';
 
     const screens = SCREENS.filter(x => x.name.toLowerCase().includes(s.navQuery.toLowerCase())).map(x => {
       const active = x.key === s.screen;
       return {
         ...x, key: x.key,
         audio: active && s.sounds.some(y => y.on),
-        style: 'display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: ' + (active ? '#1c1730' : 'transparent') + '; border: 0; border-left: 2px solid ' + (active ? '#8f7ad6' : 'transparent') + '; border-radius: 5px; color: ' + (active ? '#e6e9ee' : '#a7b0bc') + '; font-family: inherit; font-size: 12px; cursor: pointer;',
+        style: 'display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 8px; background: ' + (active ? 'var(--acc-row)' : 'transparent') + '; border: 0; border-left: 2px solid ' + (active ? 'var(--acc-solid)' : 'transparent') + '; border-radius: 5px; color: ' + (active ? '#e6e9ee' : '#a7b0bc') + '; font-family: inherit; font-size: 12px; cursor: pointer;',
         pick: () => this.switchScreen(x.key)
       };
     });
@@ -1677,8 +1782,8 @@ class Component extends DCLogic {
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
-    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328', spawn: '#1b2417' };
-    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4', spawn: '#9fce6b' };
+    const kindBg = { rule: 'var(--acc-bg)', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328', spawn: '#1b2417' };
+    const kindFg = { rule: 'var(--acc-light)', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4', spawn: '#9fce6b' };
     const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (kindBg[k] || '#241f13') + '; color: ' + (kindFg[k] || '#d0b25a') + ';';
 
     const excerpt = RULES[s.excerpt];
@@ -1690,7 +1795,7 @@ class Component extends DCLogic {
       name: o.t.name, cat: o.t.category, playing: o.i === s.nowPlaying, allCats: MUSIC_CATS,
       play: () => this.playTrack(o.i),
       setCat: e => this.setTrackCat(o.t.name, e.target.value),
-      rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border-radius: 5px; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? '#1c1730' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? '#c4b2ff' : '#a7b0bc') + ';'
+      rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border-radius: 5px; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? 'var(--acc-row)' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? 'var(--acc-light)' : '#a7b0bc') + ';'
     }));
 
     // Floating damage/heal number (rendered over the token and by the sheet HP).
@@ -1698,7 +1803,7 @@ class Component extends DCLogic {
     const flashText = flash ? ((flash.delta < 0 ? '' : '+') + flash.delta) : '';
     const flashColor = flash ? (flash.delta < 0 ? '#e08d7c' : '#74c3a7') : '';
     const dense = s.dense;
-    const pillBtn = on => 'flex: 1; height: 22px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 500; border: 1px solid ' + (on ? '#46375f' : '#2b333d') + '; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#8b95a3') + ';';
+    const pillBtn = on => 'flex: 1; height: 22px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 500; border: 1px solid ' + (on ? 'var(--acc-border)' : '#2b333d') + '; background: ' + (on ? 'var(--acc-bg)' : 'transparent') + '; color: ' + (on ? 'var(--acc-light)' : '#8b95a3') + ';';
 
     return {
       isPrep, round: s.round, castOn: s.castOn, castFallback: s.castFallback, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
@@ -1706,12 +1811,18 @@ class Component extends DCLogic {
       flashMapStyle: flashTarget ? ('position: absolute; left: ' + flashTarget.x + '%; top: ' + flashTarget.y + '%; width: 60px; margin: -34px 0 0 -30px; text-align: center; font-weight: 700; font-size: 15px; pointer-events: none; z-index: 20; opacity: 0; color: ' + flashColor + '; text-shadow: 0 1px 4px rgba(0,0,0,.85);') : '',
       hasFlashSel: !!(flash && flash.id === s.sel),
       flashSheetStyle: 'position: absolute; right: 0; top: -8px; font-weight: 700; font-size: 16px; pointer-events: none; opacity: 0; color: ' + flashColor + ';',
-      denseOn: dense, chimeOn: s.chime,
-      denseBtn: pillBtn(dense), chimeBtn: pillBtn(s.chime),
-      denseLabel: dense ? '≣ Compact' : '≣ Compact',
+      denseOn: dense, chimeOn: s.chime, lairOn: s.lair,
+      denseBtn: pillBtn(dense), chimeBtn: pillBtn(s.chime), lairBtn: pillBtn(s.lair),
+      denseLabel: '≣ Compact',
       chimeLabel: s.chime ? '🔔 Chime on' : '🔕 Chime off',
+      lairLabel: s.lair ? '🏛 Lair on' : '🏛 Lair',
       toggleDense: () => this.toggleDense(),
       toggleChime: () => this.toggleChime(),
+      toggleLair: () => this.toggleLair(),
+      accents: ACCENT_ORDER.map(k => ({
+        name: ACCENTS[k].label, pick: () => this.setAccent(k),
+        style: 'width: 20px; height: 20px; border-radius: 50%; cursor: pointer; padding: 0; background: ' + ACCENTS[k].bright + '; border: 2px solid ' + (s.accent === k ? '#e6e9ee' : 'transparent') + '; box-shadow: 0 0 0 1px #2b333d;'
+      })),
       leftOpen: s.leftOpen, rightOpen: s.rightOpen,
       gridCols: (s.leftOpen ? '236px' : '0px') + ' 18px 1fr 18px ' + (s.rightOpen ? '306px' : '0px'),
       leftChevron: s.leftOpen ? '‹' : '›', rightChevron: s.rightOpen ? '›' : '‹',
@@ -1720,7 +1831,7 @@ class Component extends DCLogic {
       clock: Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s.secs % 60).padStart(2, '0'),
       modeLabel: isPrep ? 'Prep' : 'Running',
       liveDot: isPrep ? '#d0b25a' : '#4fa88b',
-      mapBorder: active.pc ? '#2f3a46' : '#46375f',
+      mapBorder: active.pc ? '#2f3a46' : 'var(--acc-border)',
       prepBtn: modeBtn(isPrep), playBtn: modeBtn(!isPrep),
       setPrep: () => this.setState({ mode: 'prep' }), setPlay: () => this.setState({ mode: 'play' }),
       openPalette: () => this.setState({ paletteOpen: true, query: '', pi: 0, spawnHint: false }),
@@ -1752,13 +1863,13 @@ class Component extends DCLogic {
       saveLabel: 'saved ' + (s.secs % 17) + 's ago',
       castStatus: (s.castOn || s.castFallback) ? 'casting the map to players' : 'nothing shared',
       castLabel: (s.castOn || s.castFallback) ? 'Stop sharing' : 'Show players',
-      castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + ((s.castOn || s.castFallback) ? '#6d5bb5' : '#2b333d') + '; background: ' + ((s.castOn || s.castFallback) ? '#2c2140' : '#171c22') + '; color: ' + ((s.castOn || s.castFallback) ? '#c4b2ff' : '#c3cad4') + ';',
+      castBtn: 'height: 28px; padding: 0 12px; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 500; cursor: pointer; border: 1px solid ' + ((s.castOn || s.castFallback) ? 'var(--acc-deep)' : '#2b333d') + '; background: ' + ((s.castOn || s.castFallback) ? 'var(--acc-bg2)' : '#171c22') + '; color: ' + ((s.castOn || s.castFallback) ? 'var(--acc-light)' : '#c3cad4') + ';',
       toggleCast: () => this.toggleCast(),
 
       prefabs: PREFABS.map(p => ({ ...p, drop: () => this.dropPrefab(p) })),
       extraTiles: s.extraTiles.map(t => ({
         id: t.id, name: t.name, count: t.count,
-        style: 'position: absolute; left: ' + t.x + 'px; top: ' + t.y + 'px; width: 240px; height: 168px; background: #14181d; border: 1px solid #46375f; border-radius: 11px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; flex-direction: column; z-index: 5;',
+        style: 'position: absolute; left: ' + t.x + 'px; top: ' + t.y + 'px; width: 240px; height: 168px; background: #14181d; border: 1px solid var(--acc-border); border-radius: 11px; overflow: hidden; box-shadow: 0 14px 34px rgba(0,0,0,.45); display: flex; flex-direction: column; z-index: 5;',
         close: () => this.closeTile(t.id)
       })),
 
@@ -1808,12 +1919,12 @@ class Component extends DCLogic {
 
       toggleMute: () => this.toggleMute(),
       muteLabel: s.muted ? 'muted' : 'mute',
-      muteBtn: 'font-family: inherit; font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid ' + (s.muted ? '#6d5bb5' : '#2b333d') + '; background: ' + (s.muted ? '#2c2140' : 'transparent') + '; color: ' + (s.muted ? '#c4b2ff' : '#6f7987') + ';',
+      muteBtn: 'font-family: inherit; font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 5px; cursor: pointer; border: 1px solid ' + (s.muted ? 'var(--acc-deep)' : '#2b333d') + '; background: ' + (s.muted ? 'var(--acc-bg2)' : 'transparent') + '; color: ' + (s.muted ? 'var(--acc-light)' : '#6f7987') + ';',
 
       tokens: s.combatants.map(c => ({
         initial: c.name[0], title: c.name + ' \u00b7 ' + c.hp + '/' + c.max,
         pick: () => this.setState({ sel: c.id }),
-        style: 'position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; cursor: pointer; color: ' + (c.hp === 0 ? '#4a5361' : '#0d1013') + '; background: ' + (c.hp === 0 ? '#232a33' : c.pc ? '#4fa88b' : '#c9573f') + '; opacity: ' + (c.hp === 0 ? .5 : 1) + '; border: 2px solid ' + (c.id === active.id ? '#a78bfa' : 'rgba(0,0,0,.4)') + ';' + (c.id === active.id ? ' animation: om-ring 1.6s infinite;' : '')
+        style: 'position: absolute; left: ' + c.x + '%; top: ' + c.y + '%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 600; cursor: pointer; color: ' + (c.hp === 0 ? '#4a5361' : '#0d1013') + '; background: ' + (c.hp === 0 ? '#232a33' : c.pc ? '#4fa88b' : '#c9573f') + '; opacity: ' + (c.hp === 0 ? .5 : 1) + '; border: 2px solid ' + (c.id === active.id ? 'var(--acc-bright)' : 'rgba(0,0,0,.4)') + ';' + (c.id === active.id ? ' animation: om-ring 1.6s infinite;' : '')
       })),
       castTokens: s.combatants.map(c => ({
         initial: c.name[0],
@@ -1823,9 +1934,10 @@ class Component extends DCLogic {
       order: s.combatants.map(c => ({
         name: c.name, init: c.init, badge: c.badge, pct: pct(c), color: col(c),
         active: c.id === active.id ? 'yes' : 'no',
+        hasLeg: !!c.legendary, legLeft: c.legendary ? (c.legendary.max - c.legendary.used) : 0,
         hpLabel: c.pc ? c.hp + '/' + c.max : c.hp === 0 ? 'down' : c.hp + '/' + c.max,
-        row: 'display: flex; align-items: center; gap: ' + (dense ? '7px' : '9px') + '; width: 100%; padding: ' + (dense ? '2px 7px' : '6px 7px') + '; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === active.id ? ('inset 3px 0 0 0 #a78bfa' + (c.id === s.sel ? ', inset 0 0 0 1px #3a3352' : '')) : c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
-        initBox: 'width: ' + (dense ? 21 : 26) + 'px; height: ' + (dense ? 21 : 26) + 'px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: ' + (dense ? 10.5 : 11.5) + 'px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? '#2c2140' : '#191f26') + '; color: ' + (c.id === active.id ? '#c4b2ff' : '#8b95a3') + ';',
+        row: 'display: flex; align-items: center; gap: ' + (dense ? '7px' : '9px') + '; width: 100%; padding: ' + (dense ? '2px 7px' : '6px 7px') + '; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? 'var(--acc-row)' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === active.id ? ('inset 3px 0 0 0 var(--acc-bright)' + (c.id === s.sel ? ', inset 0 0 0 1px var(--acc-sel)' : '')) : c.id === s.sel ? 'inset 0 0 0 1px var(--acc-sel)' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
+        initBox: 'width: ' + (dense ? 21 : 26) + 'px; height: ' + (dense ? 21 : 26) + 'px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: ' + (dense ? 10.5 : 11.5) + 'px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? 'var(--acc-bg2)' : '#191f26') + '; color: ' + (c.id === active.id ? 'var(--acc-light)' : '#8b95a3') + ';',
         nameStyle: 'font-size: 12.5px; font-weight: ' + (c.id === active.id ? 600 : 400) + '; color: ' + (c.hp === 0 ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (c.hp === 0 ? 'line-through' : 'none') + ';',
         pick: () => this.setState({ sel: c.id }),
         dragStart: e => { this._dragId = c.id; if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', c.id); } catch (_) {} } },
@@ -1854,7 +1966,7 @@ class Component extends DCLogic {
       selConc: sel.conc || '',
       onConc: e => this.setConc(e.target.value),
       hasConc: !!sel.conc,
-      concBorder: sel.conc ? '#6d5bb5' : '#262d36',
+      concBorder: sel.conc ? 'var(--acc-deep)' : '#262d36',
       pcLabel: sel.pc ? 'PC' : 'Foe',
       pcBtn: 'height: 22px; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 600; border: 1px solid ' + (sel.pc ? '#274539' : '#452a26') + '; background: ' + (sel.pc ? '#14201b' : '#211514') + '; color: ' + (sel.pc ? '#74c3a7' : '#e08d7c') + ';',
       numInput: 'width: 40px; height: 20px; background: #0d1013; border: 1px solid #262d36; border-radius: 4px; color: #e6e9ee; font-family: inherit; font-size: 11px; text-align: center; outline: none;',
@@ -1867,7 +1979,7 @@ class Component extends DCLogic {
       conds: CONDS.map(name => {
         const on = sel.conds.some(c => c.name === name);
         return { name, toggle: () => this.cond(name),
-          style: 'padding: 3px 9px; border-radius: 12px; font-family: inherit; font-size: 10.5px; cursor: pointer; border: 1px solid ' + (on ? '#46375f' : '#2b333d') + '; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#8b95a3') + ';' };
+          style: 'padding: 3px 9px; border-radius: 12px; font-family: inherit; font-size: 10.5px; cursor: pointer; border: 1px solid ' + (on ? 'var(--acc-border)' : '#2b333d') + '; background: ' + (on ? 'var(--acc-bg)' : 'transparent') + '; color: ' + (on ? 'var(--acc-light)' : '#8b95a3') + ';' };
       }),
       // Active conditions with a rounds control (\u221e / \u2212 N +).
       activeConds: sel.conds.map(c => ({
@@ -1878,6 +1990,17 @@ class Component extends DCLogic {
         clear: () => this.cond(c.name)
       })),
       hasConds: sel.conds.length > 0,
+      // Legendary actions (a boss's per-round pool; refreshes on its turn).
+      legShow: !sel.pc,
+      legHas: !!sel.legendary,
+      legNone: !sel.legendary,
+      legMax: sel.legendary ? sel.legendary.max : 0,
+      legRemaining: sel.legendary ? (sel.legendary.max - sel.legendary.used) : 0,
+      legPips: sel.legendary ? Array.from({ length: sel.legendary.max }, (_, i) => ({ style: 'width: 13px; height: 13px; border-radius: 50%; border: 1px solid var(--acc-border); background: ' + (i < (sel.legendary.max - sel.legendary.used) ? 'var(--acc-solid)' : 'transparent') + ';' })) : [],
+      legAdd: () => this.setLegendaryMax(1),
+      legLess: () => this.setLegendaryMax(-1),
+      legSpend: () => this.spendLegendary(),
+      legRefresh: () => this.refreshLegendary(),
       // Attacks \u2014 click to roll to-hit + damage into the log.
       selAttacks: (sel.attacks || []).map((a, i) => ({
         name: a.name, hit: a.hit, hitLabel: (a.hit >= 0 ? '+' + a.hit : String(a.hit)), dmg: a.dmg,
@@ -1921,7 +2044,7 @@ class Component extends DCLogic {
       advMode: s.advMode,
       advBtns: [['norm', 'Normal'], ['adv', 'Advantage'], ['dis', 'Disadvantage']].map(([mode, label]) => ({
         label, set: () => this.setAdv(mode),
-        style: 'flex: 1; height: 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10.5px; border: 1px solid ' + (s.advMode === mode ? '#46375f' : '#2b333d') + '; background: ' + (s.advMode === mode ? '#22192e' : 'transparent') + '; color: ' + (s.advMode === mode ? '#c4b2ff' : '#8b95a3') + ';'
+        style: 'flex: 1; height: 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10.5px; border: 1px solid ' + (s.advMode === mode ? 'var(--acc-border)' : '#2b333d') + '; background: ' + (s.advMode === mode ? 'var(--acc-bg)' : 'transparent') + '; color: ' + (s.advMode === mode ? 'var(--acc-light)' : '#8b95a3') + ';'
       })),
       d20: () => this.roll('d20'),
       rollTotal: s.rolls[0] ? s.rolls[0].total : '\u2014',
