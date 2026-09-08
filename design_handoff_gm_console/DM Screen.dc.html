@@ -271,6 +271,9 @@
             <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="8">
               <div onClick="{{ t.pick }}" style="{{ t.style }}" title="{{ t.title }}">{{ t.initial }}</div>
             </sc-for>
+            <sc-if value="{{ hasFlash }}" hint-placeholder-val="{{ false }}">
+              <div data-flash="map" style="{{ flashMapStyle }}">{{ flashText }}</div>
+            </sc-if>
             <div style="position: absolute; left: 10px; bottom: 8px; color: #56606d; font-size: 10px;">tokens follow the initiative order · click one to open its sheet</div>
           </div>
         </section>
@@ -294,11 +297,14 @@
               <button onClick="{{ toggleSelPc }}" style="{{ pcBtn }}" title="Toggle player character / foe">{{ pcLabel }}</button>
             </div>
 
-            <div style="margin-top: 12px; display: flex; align-items: baseline; gap: 6px;">
+            <div style="position: relative; margin-top: 12px; display: flex; align-items: baseline; gap: 6px;">
               <span style="font-family: 'Crimson Pro', serif; font-size: 30px; font-weight: 600; color: {{ selHpColor }}; font-variant-numeric: tabular-nums; line-height: 1;">{{ selHp }}</span>
               <span style="color: #6f7987; font-size: 12px;">/ {{ selMax }} hp</span>
               <span style="flex: 1;"></span>
               <span style="{{ selTag }}">{{ selTagLabel }}</span>
+              <sc-if value="{{ hasFlashSel }}" hint-placeholder-val="{{ false }}">
+                <span data-flash="sheet" style="{{ flashSheetStyle }}">{{ flashText }}</span>
+              </sc-if>
             </div>
             <div style="margin-top: 7px; height: 5px; background: #202730; border-radius: 3px; overflow: hidden;">
               <div style="height: 100%; width: {{ selPct }}%; background: {{ selHpColor }}; transition: width .18s ease;"></div>
@@ -515,6 +521,11 @@
         <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Sort the order by initiative (highest first)">↕</button>
         <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a blank combatant to the initiative">＋</button>
         <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
+      </div>
+
+      <div style="display: flex; gap: 6px; padding: 0 12px 7px;">
+        <button onClick="{{ toggleDense }}" style="{{ denseBtn }}" title="Compact rows — fit more combatants on screen">{{ denseLabel }}</button>
+        <button onClick="{{ toggleChime }}" style="{{ chimeBtn }}" title="Play a soft chime when the turn advances (respects mute)">{{ chimeLabel }}</button>
       </div>
 
       <div style="padding: 0 8px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
@@ -737,6 +748,7 @@ class Component extends DCLogic {
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
     leftOpen: true, rightOpen: true, undo: [], spawnHint: false,
+    flash: null, dense: false, chime: false,
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
@@ -1012,10 +1024,30 @@ class Component extends DCLogic {
     this.persistPanels();
   }
   loadPanels() {
-    try { const p = JSON.parse(localStorage.getItem('dmscreen.panels') || 'null'); if (p) this.setState({ leftOpen: p.leftOpen !== false, rightOpen: p.rightOpen !== false }); } catch (e) {}
+    try { const p = JSON.parse(localStorage.getItem('dmscreen.panels') || 'null'); if (p) this.setState({ leftOpen: p.leftOpen !== false, rightOpen: p.rightOpen !== false, dense: !!p.dense, chime: !!p.chime }); } catch (e) {}
   }
   persistPanels() {
-    try { localStorage.setItem('dmscreen.panels', JSON.stringify({ leftOpen: this.state.leftOpen, rightOpen: this.state.rightOpen })); } catch (e) {}
+    try { localStorage.setItem('dmscreen.panels', JSON.stringify({ leftOpen: this.state.leftOpen, rightOpen: this.state.rightOpen, dense: this.state.dense, chime: this.state.chime })); } catch (e) {}
+  }
+  toggleDense() { this.setState(s => ({ dense: !s.dense })); this.persistPanels(); }
+  toggleChime() { this.setState(s => ({ chime: !s.chime })); this.persistPanels(); this.logIt(this.state.chime ? 'Turn chime on' : 'Turn chime off'); }
+  // A short two-note chime synthesised with WebAudio (no asset). Honours mute.
+  playChime() {
+    if (this.state.muted || !this.state.chime) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ctx = this._actx || (this._actx = new AC());
+      if (ctx.state === 'suspended') ctx.resume();
+      const now = ctx.currentTime;
+      [[660, 0], [880, 0.09]].forEach(([f, dt]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, now + dt);
+        g.gain.linearRampToValueAtTime(0.13, now + dt + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dt + 0.22);
+        o.connect(g); g.connect(ctx.destination); o.start(now + dt); o.stop(now + dt + 0.24);
+      });
+    } catch (e) {}
   }
 
   /* --- Scene notes (editable, saved on this device) ------------------------- */
@@ -1233,6 +1265,16 @@ class Component extends DCLogic {
       this._lastTurn = this.state.turn;
       try { const el = document.querySelector('[data-active="yes"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
     }
+    // Float the damage/heal number up when a new hp change lands (WebAnimations
+    // guarantees the animation restarts on repeated hits, unlike a CSS class).
+    if (this.state.flash && this._flashSeq !== this.state.flash.seq) {
+      this._flashSeq = this.state.flash.seq;
+      try {
+        document.querySelectorAll('[data-flash]').forEach(el => el.animate(
+          [{ opacity: 0, transform: 'translateY(2px)' }, { opacity: 1, offset: .18 }, { opacity: 0, transform: 'translateY(-24px)' }],
+          { duration: 900, easing: 'ease-out' }));
+      } catch (e) {}
+    }
     // Snapshot the default (template) tile positions once, then restore any
     // saved layout for the screen we're on.
     if (!this._defaultLayout) {
@@ -1403,6 +1445,7 @@ class Component extends DCLogic {
       return { turn: n, round, sel: c.pc ? s.sel : c.id, log: [...s.log, { t: this.clockShort(), text: (n === 0 ? 'Round ' + round + ' \u2014 ' : '') + c.name + '\u2019s turn' }].slice(-40) };
     });
     if (wrapped) this.tickConditions();   // count down timed conditions each new round
+    this.playChime();
     this.persistEncounter();
   }
 
@@ -1428,8 +1471,11 @@ class Component extends DCLogic {
         }
       }
       const combatants = s.combatants.map(c => c.id !== id ? c : { ...c, hp: newHp, conc });
-      return { combatants, log: [...s.log, ...logs].slice(-40) };
+      return { combatants, log: [...s.log, ...logs].slice(-40), flash: { id, delta: d, seq: (s.flash ? s.flash.seq : 0) + 1 } };
     });
+    // Clear the floating number after it has risen and faded.
+    if (this._flashTimer) clearTimeout(this._flashTimer);
+    this._flashTimer = setTimeout(() => this.setState({ flash: null }), 900);
   }
 
   cond(name) {
@@ -1647,8 +1693,25 @@ class Component extends DCLogic {
       rowStyle: 'display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border-radius: 5px; font-family: inherit; font-size: 11px; background: ' + (o.i === s.nowPlaying ? '#1c1730' : 'transparent') + '; color: ' + (o.i === s.nowPlaying ? '#c4b2ff' : '#a7b0bc') + ';'
     }));
 
+    // Floating damage/heal number (rendered over the token and by the sheet HP).
+    const flash = s.flash, flashTarget = flash ? s.combatants.find(c => c.id === flash.id) : null;
+    const flashText = flash ? ((flash.delta < 0 ? '' : '+') + flash.delta) : '';
+    const flashColor = flash ? (flash.delta < 0 ? '#e08d7c' : '#74c3a7') : '';
+    const dense = s.dense;
+    const pillBtn = on => 'flex: 1; height: 22px; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: 500; border: 1px solid ' + (on ? '#46375f' : '#2b333d') + '; background: ' + (on ? '#22192e' : 'transparent') + '; color: ' + (on ? '#c4b2ff' : '#8b95a3') + ';';
+
     return {
       isPrep, round: s.round, castOn: s.castOn, castFallback: s.castFallback, paletteOpen: s.paletteOpen, query: s.query, navQuery: s.navQuery,
+      hasFlash: !!flashTarget, flashText,
+      flashMapStyle: flashTarget ? ('position: absolute; left: ' + flashTarget.x + '%; top: ' + flashTarget.y + '%; width: 60px; margin: -34px 0 0 -30px; text-align: center; font-weight: 700; font-size: 15px; pointer-events: none; z-index: 20; opacity: 0; color: ' + flashColor + '; text-shadow: 0 1px 4px rgba(0,0,0,.85);') : '',
+      hasFlashSel: !!(flash && flash.id === s.sel),
+      flashSheetStyle: 'position: absolute; right: 0; top: -8px; font-weight: 700; font-size: 16px; pointer-events: none; opacity: 0; color: ' + flashColor + ';',
+      denseOn: dense, chimeOn: s.chime,
+      denseBtn: pillBtn(dense), chimeBtn: pillBtn(s.chime),
+      denseLabel: dense ? '≣ Compact' : '≣ Compact',
+      chimeLabel: s.chime ? '🔔 Chime on' : '🔕 Chime off',
+      toggleDense: () => this.toggleDense(),
+      toggleChime: () => this.toggleChime(),
       leftOpen: s.leftOpen, rightOpen: s.rightOpen,
       gridCols: (s.leftOpen ? '236px' : '0px') + ' 18px 1fr 18px ' + (s.rightOpen ? '306px' : '0px'),
       leftChevron: s.leftOpen ? '‹' : '›', rightChevron: s.rightOpen ? '›' : '‹',
@@ -1761,8 +1824,8 @@ class Component extends DCLogic {
         name: c.name, init: c.init, badge: c.badge, pct: pct(c), color: col(c),
         active: c.id === active.id ? 'yes' : 'no',
         hpLabel: c.pc ? c.hp + '/' + c.max : c.hp === 0 ? 'down' : c.hp + '/' + c.max,
-        row: 'display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 7px; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === active.id ? ('inset 3px 0 0 0 #a78bfa' + (c.id === s.sel ? ', inset 0 0 0 1px #3a3352' : '')) : c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
-        initBox: 'width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? '#2c2140' : '#191f26') + '; color: ' + (c.id === active.id ? '#c4b2ff' : '#8b95a3') + ';',
+        row: 'display: flex; align-items: center; gap: ' + (dense ? '7px' : '9px') + '; width: 100%; padding: ' + (dense ? '2px 7px' : '6px 7px') + '; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === active.id ? ('inset 3px 0 0 0 #a78bfa' + (c.id === s.sel ? ', inset 0 0 0 1px #3a3352' : '')) : c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
+        initBox: 'width: ' + (dense ? 21 : 26) + 'px; height: ' + (dense ? 21 : 26) + 'px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: ' + (dense ? 10.5 : 11.5) + 'px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? '#2c2140' : '#191f26') + '; color: ' + (c.id === active.id ? '#c4b2ff' : '#8b95a3') + ';',
         nameStyle: 'font-size: 12.5px; font-weight: ' + (c.id === active.id ? 600 : 400) + '; color: ' + (c.hp === 0 ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (c.hp === 0 ? 'line-through' : 'none') + ';',
         pick: () => this.setState({ sel: c.id }),
         dragStart: e => { this._dragId = c.id; if (e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', c.id); } catch (_) {} } },
