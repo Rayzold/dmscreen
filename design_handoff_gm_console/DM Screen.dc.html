@@ -509,16 +509,17 @@
     <aside style="background: #12161b; border-left: 1px solid #232a33; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden;">
       <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px 8px;">
         <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
-        <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant is highlighted and its map token rings; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through.">?</span>
+        <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant gets a violet accent bar and its map token rings — it auto-scrolls into view as turns advance; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through. 🐉 adds a monster from the bestiary with its initiative rolled; ＋ adds a blank combatant. ⌘Z undoes the last change; the fight is auto-saved and survives a refresh.">?</span>
         <span style="flex: 1;"></span>
+        <button onClick="{{ openBestiary }}" style="background: #17210f; border: 1px solid #2e3d1c; border-radius: 6px; color: #9fce6b; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #46602a;" title="Add a monster from the bestiary (rolls its initiative)">🐉</button>
         <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Sort the order by initiative (highest first)">↕</button>
-        <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a combatant to the initiative">＋</button>
+        <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: #4a3f6b;" title="Add a blank combatant to the initiative">＋</button>
         <button onClick="{{ nextTurn }}" style="background: #22192e; border: 1px solid #46375f; border-radius: 6px; color: #c4b2ff; font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: #2c2140;" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
       </div>
 
       <div style="padding: 0 8px; overflow: auto; display: flex; flex-direction: column; gap: 2px;">
         <sc-for list="{{ order }}" as="c" hint-placeholder-count="8">
-          <div draggable="true" onDragStart="{{ c.dragStart }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.row }}" style-hover="background: #1a1f26;">
+          <div draggable="true" data-active="{{ c.active }}" onDragStart="{{ c.dragStart }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.row }}" style-hover="background: #1a1f26;">
             <span style="color: #4a5361; cursor: grab; font-size: 11px; flex: none;" title="Drag to reorder">⠿</span>
             <button onClick="{{ c.pick }}" style="display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-family: inherit; color: inherit;">
               <span style="{{ c.initBox }}">{{ c.init }}</span>
@@ -675,6 +676,30 @@ const LINKS = [
   { title: '🕸️ NPC Relationship Web', sub: 'Notion · how the NPCs connect', url: 'https://www.notion.so/363414fb2dda810d9436d15cd5173e30' }
 ];
 
+// Bestiary — SRD stat blocks used for one-click "add to initiative". Just the
+// numbers a GM needs at the table (hp, AC, ability mods, attacks); searchable
+// in the command palette and behind the 🐉 button on the initiative rail.
+const MONSTERS = [
+  { name: 'Bandit', badge: 'bandit', hp: 11, ac: 12, abil: { str: 0, dex: 1, con: 1, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Scimitar', hit: 3, dmg: '1d6+1' }, { name: 'Light Crossbow', hit: 3, dmg: '1d8+1' }] },
+  { name: 'Bandit Captain', badge: 'bandit', hp: 65, ac: 15, abil: { str: 2, dex: 3, con: 2, int: 2, wis: 0, cha: 2 }, attacks: [{ name: 'Scimitar', hit: 5, dmg: '1d6+3' }, { name: 'Dagger', hit: 5, dmg: '1d4+3' }] },
+  { name: 'Guard', badge: 'town', hp: 11, ac: 16, abil: { str: 1, dex: 1, con: 1, int: 0, wis: 1, cha: 0 }, attacks: [{ name: 'Spear', hit: 3, dmg: '1d6+1' }] },
+  { name: 'Scout', badge: 'skirmisher', hp: 16, ac: 13, abil: { str: 0, dex: 2, con: 1, int: 0, wis: 1, cha: 0 }, attacks: [{ name: 'Shortsword', hit: 4, dmg: '1d6+2' }, { name: 'Longbow', hit: 4, dmg: '1d8+2' }] },
+  { name: 'Thug', badge: 'brute', hp: 32, ac: 11, abil: { str: 3, dex: 0, con: 2, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Mace', hit: 4, dmg: '1d6+2' }, { name: 'Heavy Crossbow', hit: 2, dmg: '1d10' }] },
+  { name: 'Veteran', badge: 'soldier', hp: 58, ac: 17, abil: { str: 3, dex: 1, con: 2, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Longsword', hit: 5, dmg: '1d8+3' }, { name: 'Shortsword', hit: 5, dmg: '1d6+3' }] },
+  { name: 'Berserker', badge: 'brute', hp: 67, ac: 13, abil: { str: 3, dex: 1, con: 3, int: -1, wis: 0, cha: -1 }, attacks: [{ name: 'Greataxe', hit: 5, dmg: '1d12+3' }] },
+  { name: 'Cultist', badge: 'cultist', hp: 9, ac: 12, abil: { str: 0, dex: 1, con: 0, int: 0, wis: -1, cha: 0 }, attacks: [{ name: 'Scimitar', hit: 3, dmg: '1d6+1' }] },
+  { name: 'Acolyte', badge: 'caster', hp: 9, ac: 10, abil: { str: 0, dex: 0, con: 0, int: 0, wis: 2, cha: 0 }, attacks: [{ name: 'Club', hit: 2, dmg: '1d4' }, { name: 'Sacred Flame', hit: 0, dmg: '1d8' }] },
+  { name: 'Goblin', badge: 'goblinoid', hp: 7, ac: 15, abil: { str: -1, dex: 2, con: 0, int: 0, wis: -1, cha: -1 }, attacks: [{ name: 'Scimitar', hit: 4, dmg: '1d6+2' }, { name: 'Shortbow', hit: 4, dmg: '1d6+2' }] },
+  { name: 'Orc', badge: 'humanoid', hp: 15, ac: 13, abil: { str: 3, dex: 1, con: 3, int: -2, wis: 0, cha: 0 }, attacks: [{ name: 'Greataxe', hit: 5, dmg: '1d12+3' }, { name: 'Javelin', hit: 5, dmg: '1d6+3' }] },
+  { name: 'Skeleton', badge: 'undead', hp: 13, ac: 13, abil: { str: 0, dex: 2, con: 2, int: -2, wis: 0, cha: -3 }, attacks: [{ name: 'Shortsword', hit: 4, dmg: '1d6+2' }, { name: 'Shortbow', hit: 4, dmg: '1d6+2' }] },
+  { name: 'Zombie', badge: 'undead', hp: 22, ac: 8, abil: { str: 1, dex: -2, con: 3, int: -4, wis: -2, cha: -3 }, attacks: [{ name: 'Slam', hit: 3, dmg: '1d6+1' }] },
+  { name: 'Wolf', badge: 'beast', hp: 11, ac: 13, abil: { str: 1, dex: 2, con: 1, int: -4, wis: 1, cha: -2 }, attacks: [{ name: 'Bite', hit: 4, dmg: '2d4+2' }] },
+  { name: 'Dire Wolf', badge: 'beast', hp: 37, ac: 14, abil: { str: 3, dex: 2, con: 2, int: -4, wis: 1, cha: -2 }, attacks: [{ name: 'Bite', hit: 5, dmg: '2d6+3' }] },
+  { name: 'Giant Spider', badge: 'beast', hp: 26, ac: 14, abil: { str: 2, dex: 3, con: 1, int: -4, wis: 0, cha: -3 }, attacks: [{ name: 'Bite', hit: 5, dmg: '1d8+3' }] },
+  { name: 'Ogre', badge: 'giant', hp: 59, ac: 11, abil: { str: 4, dex: -1, con: 3, int: -3, wis: -2, cha: -2 }, attacks: [{ name: 'Greatclub', hit: 6, dmg: '2d8+4' }, { name: 'Javelin', hit: 6, dmg: '2d6+4' }] },
+  { name: 'Ghoul', badge: 'undead', hp: 22, ac: 12, abil: { str: 1, dex: 2, con: 0, int: -2, wis: 0, cha: -2 }, attacks: [{ name: 'Claws', hit: 4, dmg: '2d4+2' }, { name: 'Bite', hit: 2, dmg: '2d6+2' }] }
+];
+
 // --- Music library helpers ------------------------------------------------
 const MUSIC_CATS = ['Combat', 'Boss', 'Tavern & Town', 'Dungeon', 'Horror', 'Tension', 'Ritual', 'Travel', 'Rest & Sorrow', 'Other'];
 // Guess a track's category from its filename (works with these libraries'
@@ -711,7 +736,7 @@ class Component extends DCLogic {
     mode: 'play', turn: 1, round: 2, secs: 8046, castOn: false,
     paletteOpen: false, query: '', navQuery: '', book: 0, excerpt: 0,
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
-    leftOpen: true, rightOpen: true,
+    leftOpen: true, rightOpen: true, undo: [], spawnHint: false,
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
@@ -749,7 +774,7 @@ class Component extends DCLogic {
   componentDidMount() {
     this._t = setInterval(() => this.setState(s => ({ secs: s.secs + 1 })), 1000);
     this._key = e => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState({ paletteOpen: true, query: '', pi: 0 }); return; }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState({ paletteOpen: true, query: '', pi: 0, spawnHint: false }); return; }
       // Palette navigation (↑ ↓ ⏎ esc) is handled on the palette input via
       // onPaletteKey, so it runs on the one visible instance with the right
       // `this`. This document-level listener is mounted once per component
@@ -763,6 +788,9 @@ class Component extends DCLogic {
       else if ((e.key === 'm' || e.key === 'M') && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.toggleMute(); }
       else if (e.key === '[' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.togglePanel('left'); }
       else if (e.key === ']' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); this.togglePanel('right'); }
+      // ⌘Z / Ctrl+Z undoes the last combat change — but not while typing in a
+      // field, where the browser's own text-undo should win.
+      else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.altKey && !typing) { e.preventDefault(); this.undo(); }
     };
     document.addEventListener('keydown', this._key);
     this._drag(this.canvas);
@@ -774,6 +802,8 @@ class Component extends DCLogic {
     this.loadLayouts();
     this.loadCampaignList();
     this.loadPanels();
+    this.loadEncounter();           // restore a combat left running from last time
+    this._lastTurn = this.state.turn;
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
   componentWillUnmount() {
@@ -1074,8 +1104,9 @@ class Component extends DCLogic {
     if (this._layerAudio) { for (const k in this._layerAudio) { try { this._layerAudio[k].pause(); } catch (e) {} } this._layerAudio = {}; }
     const patch = {};
     ['combatants', 'turn', 'round', 'sel', 'screen', 'extraTiles', 'layouts', 'noteTitle', 'noteBody', 'beats', 'sounds', 'catOverrides'].forEach(k => { if (d[k] !== undefined) patch[k] = d[k]; });
+    patch.undo = [];   // a loaded campaign is a fresh baseline
     this.setState(patch);
-    this.persistNotes(); this.persistLayouts();
+    this.persistNotes(); this.persistLayouts(); this.persistEncounter();
     this._applyPending = this.state.screen;   // restore this screen's tile positions
     this.bindLayerTracks();                    // re-pool soundscape to the loaded library
   }
@@ -1196,6 +1227,12 @@ class Component extends DCLogic {
   componentDidUpdate() {
     if (this.pal && document.activeElement !== this.pal) this.pal.focus();
     if (this.state.castOn) this.updatePop();
+    // Keep the active combatant visible as turns advance — but only when the
+    // turn actually changed (this fires on every render, incl. the 1s clock).
+    if (this._lastTurn !== this.state.turn) {
+      this._lastTurn = this.state.turn;
+      try { const el = document.querySelector('[data-active="yes"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+    }
     // Snapshot the default (template) tile positions once, then restore any
     // saved layout for the screen we're on.
     if (!this._defaultLayout) {
@@ -1235,6 +1272,66 @@ class Component extends DCLogic {
     this.setState(s => ({ log: [...s.log, { t, text }].slice(-40) }));
   }
 
+  /* --- Undo + encounter persistence -----------------------------------------
+     Combat changes go through mutate(): the updater fn(s) returns the state
+     patch, and we fold an undo snapshot of the pre-change combat state into the
+     SAME setState (a second setState in the tick would be dropped from render).
+     Every mutation also auto-saves, so a mid-session refresh restores the fight. */
+  mutate(fn) {
+    this.setState(s => {
+      const changes = fn(s);
+      if (!changes || Object.keys(changes).length === 0) return {};
+      const snap = { combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel };
+      return { ...changes, undo: [...(s.undo || []), snap].slice(-40) };
+    });
+    this.persistEncounter();
+  }
+  undo() {
+    if (!this.state.undo || !this.state.undo.length) { this.logIt('Nothing to undo'); return; }
+    this.setState(s => {
+      const undo = s.undo.slice();
+      const prev = undo.pop();
+      return { ...prev, undo, log: [...s.log, { t: this.clockShort(), text: 'Undid last change' }].slice(-40) };
+    });
+    this.persistEncounter();
+  }
+  persistEncounter() {
+    try { const s = this.state; localStorage.setItem('dmscreen.encounter', JSON.stringify({ combatants: s.combatants, turn: s.turn, round: s.round, sel: s.sel })); } catch (e) {}
+  }
+  loadEncounter() {
+    try {
+      const e = JSON.parse(localStorage.getItem('dmscreen.encounter') || 'null');
+      if (e && Array.isArray(e.combatants) && e.combatants.length) {
+        const turn = Math.min(Math.max(0, e.turn || 0), e.combatants.length - 1);
+        const sel = e.combatants.some(c => c.id === e.sel) ? e.sel : e.combatants[turn].id;
+        this.setState({ combatants: e.combatants, turn, round: e.round || 1, sel });
+      }
+    } catch (e) {}
+  }
+  // Add a bestiary creature to the initiative, rolling its initiative (d20 +
+  // dex mod) and inserting it in order. Names of duplicates get numbered.
+  spawnMonster(m) {
+    const id = 'm' + Date.now().toString(36);
+    const dex = (m.abil && m.abil.dex) || 0;
+    const init = 1 + Math.floor(Math.random() * 20) + dex;
+    this.mutate(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const dup = s.combatants.filter(c => c.name === m.name || c.name.indexOf(m.name + ' ') === 0).length;
+      const name = dup ? m.name + ' ' + (dup + 1) : m.name;
+      const nc = { id, name, init, hp: m.hp, max: m.hp, ac: m.ac, pc: false, badge: m.badge || 'foe',
+        x: 40 + Math.floor(Math.random() * 40), y: 30 + Math.floor(Math.random() * 45),
+        conds: [], conc: null, abil: { ...(m.abil || { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }) },
+        attacks: (m.attacks || []).map(a => ({ ...a })) };
+      const combatants = [...s.combatants];
+      let idx = combatants.findIndex(c => c.init < nc.init);
+      if (idx < 0) idx = combatants.length;
+      combatants.splice(idx, 0, nc);
+      const i = combatants.findIndex(c => c.id === activeId);
+      return { combatants, turn: i < 0 ? 0 : i, sel: id, paletteOpen: false, spawnHint: false,
+        log: [...s.log, { t: this.clockShort(), text: 'Added ' + name + ' (init ' + init + ') from the bestiary' }].slice(-40) };
+    });
+  }
+
   // The command palette searches the real app, not a canned list: every rule,
   // every screen, every prefab, and every combatant on the board.
   searchIndex() {
@@ -1244,10 +1341,14 @@ class Component extends DCLogic {
     for (const p of PREFABS) out.push({ kind: 'tile', title: p.name, sub: 'prefab · ' + p.count, _prefab: p });
     for (const c of s.combatants) out.push({ kind: 'monster', title: c.name, sub: (c.pc ? 'player character · ' + c.badge : 'hostile · ' + c.badge) + ' · ' + c.hp + '/' + c.max + ' hp', _id: c.id });
     for (const l of LINKS) out.push({ kind: 'link', title: l.title, sub: l.sub, _url: l.url });
+    for (const mo of MONSTERS) out.push({ kind: 'spawn', title: mo.name, sub: 'bestiary · add to initiative · ' + mo.hp + ' hp · AC ' + mo.ac, _mon: mo });
     return out;
   }
   paletteHits() {
-    const q = this.state.query.trim().toLowerCase();
+    const s = this.state;
+    const q = s.query.trim().toLowerCase();
+    // Empty query behind the 🐉 button shows the bestiary so you can just pick one.
+    if (!q && s.spawnHint) return MONSTERS.map(mo => ({ kind: 'spawn', title: mo.name, sub: 'bestiary · add to initiative · ' + mo.hp + ' hp · AC ' + mo.ac, _mon: mo })).slice(0, 7);
     return this.searchIndex().filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
   }
 
@@ -1269,6 +1370,8 @@ class Component extends DCLogic {
     } else if (r.kind === 'link') {
       try { window.open(r._url, '_blank', 'noopener'); } catch (e) {}
       this.setState(s => ({ paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in Notion' }].slice(-40) }));
+    } else if (r.kind === 'spawn') {
+      this.spawnMonster(r._mon);   // closes the palette inside its own mutate()
     } else {
       this.setState({ paletteOpen: false });
     }
@@ -1300,10 +1403,11 @@ class Component extends DCLogic {
       return { turn: n, round, sel: c.pc ? s.sel : c.id, log: [...s.log, { t: this.clockShort(), text: (n === 0 ? 'Round ' + round + ' \u2014 ' : '') + c.name + '\u2019s turn' }].slice(-40) };
     });
     if (wrapped) this.tickConditions();   // count down timed conditions each new round
+    this.persistEncounter();
   }
 
   hp(id, d) {
-    this.setState(s => {
+    this.mutate(s => {
       const was = s.combatants.find(x => x.id === id);
       if (!was) return {};
       const newHp = Math.max(0, Math.min(was.max, was.hp + d));
@@ -1329,14 +1433,14 @@ class Component extends DCLogic {
   }
 
   cond(name) {
-    this.setState(s => ({
+    this.mutate(s => ({
       combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conds: c.conds.some(x => x.name === name) ? c.conds.filter(x => x.name !== name) : [...c.conds, { name, rounds: null }] })
     }));
   }
   // Set a condition's remaining rounds (null = indefinite). It counts down each
   // new round and auto-removes at zero.
   setCondRounds(name, rounds) {
-    this.setState(s => ({
+    this.mutate(s => ({
       combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conds: c.conds.map(x => x.name === name ? { ...x, rounds: rounds } : x) })
     }));
   }
@@ -1360,7 +1464,7 @@ class Component extends DCLogic {
 
   /* --- Editable combatants -------------------------------------------------- */
   editCombatant(id, field, value) {
-    this.setState(s => {
+    this.mutate(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
       let combatants = s.combatants.map(c => {
         if (c.id !== id) return c;
@@ -1376,7 +1480,7 @@ class Component extends DCLogic {
     });
   }
   sortInit() {
-    this.setState(s => {
+    this.mutate(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
       const combatants = [...s.combatants].sort((a, b) => b.init - a.init);
       const i = combatants.findIndex(c => c.id === activeId);
@@ -1385,7 +1489,7 @@ class Component extends DCLogic {
   }
   reorderCombatant(fromId, toId) {
     if (!fromId || fromId === toId) return;
-    this.setState(s => {
+    this.mutate(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
       const arr = [...s.combatants];
       const from = arr.findIndex(c => c.id === fromId);
@@ -1441,8 +1545,8 @@ class Component extends DCLogic {
       log: [...st.log, { t: this.clockShort(), text: sel.name + ' — ' + abbr + ' save/check' + r.tag + ': ' + r.total + ' (' + r.nat + this.modStr(mod) + ')' }].slice(-40)
     }));
   }
-  editAbil(ability, value) { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, abil: { ...(c.abil || {}), [ability]: parseInt(value, 10) || 0 } }) })); }
-  setConc(value) { const v = (value || '').trim(); this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conc: v || null }) })); }
+  editAbil(ability, value) { this.mutate(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, abil: { ...(c.abil || {}), [ability]: parseInt(value, 10) || 0 } }) })); }
+  setConc(value) { const v = (value || '').trim(); this.mutate(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, conc: v || null }) })); }
   exportLog() {
     const entries = [...this.state.log];
     const header = '# ' + (this.state.campaign || 'DM Screen') + ' — session recap\n' + new Date().toLocaleString() + '\n\n';
@@ -1454,18 +1558,18 @@ class Component extends DCLogic {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  addAttack() { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: [...(c.attacks || []), { name: 'Attack', hit: 4, dmg: '1d6' }] }) })); }
+  addAttack() { this.mutate(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: [...(c.attacks || []), { name: 'Attack', hit: 4, dmg: '1d6' }] }) })); }
   editAttack(i, field, value) {
-    this.setState(s => ({ combatants: s.combatants.map(c => {
+    this.mutate(s => ({ combatants: s.combatants.map(c => {
       if (c.id !== s.sel) return c;
       const attacks = (c.attacks || []).map((a, j) => j !== i ? a : (field === 'name' ? { ...a, name: value } : field === 'hit' ? { ...a, hit: parseInt(value, 10) || 0 } : { ...a, dmg: value }));
       return { ...c, attacks };
     }) }));
   }
-  removeAttack(i) { this.setState(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: (c.attacks || []).filter((a, j) => j !== i) }) })); }
+  removeAttack(i) { this.mutate(s => ({ combatants: s.combatants.map(c => c.id !== s.sel ? c : { ...c, attacks: (c.attacks || []).filter((a, j) => j !== i) }) })); }
   addCombatant() {
     const id = 'x' + Date.now().toString(36);
-    this.setState(s => {
+    this.mutate(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
       const nc = { id, name: 'New combatant', init: 10, hp: 10, max: 10, ac: 12, pc: false, badge: 'foe', x: 50, y: 50, conds: [], conc: null, abil: { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }, attacks: [{ name: 'Attack', hit: 4, dmg: '1d6' }] };
       const combatants = [...s.combatants];
@@ -1473,12 +1577,11 @@ class Component extends DCLogic {
       if (idx < 0) idx = combatants.length;
       combatants.splice(idx, 0, nc);
       const i = combatants.findIndex(c => c.id === activeId);
-      return { combatants, turn: i < 0 ? 0 : i, sel: id };
+      return { combatants, turn: i < 0 ? 0 : i, sel: id, log: [...s.log, { t: this.clockShort(), text: 'Added a combatant' }].slice(-40) };
     });
-    this.logIt('Added a combatant');
   }
   removeCombatant(id) {
-    this.setState(s => {
+    this.mutate(s => {
       const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
       const combatants = s.combatants.filter(c => c.id !== id);
       if (!combatants.length) return { combatants, turn: 0, sel: null };
@@ -1528,8 +1631,8 @@ class Component extends DCLogic {
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
-    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328' };
-    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4' };
+    const kindBg = { rule: '#22192e', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328', spawn: '#1b2417' };
+    const kindFg = { rule: '#c4b2ff', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4', spawn: '#9fce6b' };
     const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (kindBg[k] || '#241f13') + '; color: ' + (kindFg[k] || '#d0b25a') + ';';
 
     const excerpt = RULES[s.excerpt];
@@ -1557,7 +1660,8 @@ class Component extends DCLogic {
       mapBorder: active.pc ? '#2f3a46' : '#46375f',
       prepBtn: modeBtn(isPrep), playBtn: modeBtn(!isPrep),
       setPrep: () => this.setState({ mode: 'prep' }), setPlay: () => this.setState({ mode: 'play' }),
-      openPalette: () => this.setState({ paletteOpen: true, query: '', pi: 0 }),
+      openPalette: () => this.setState({ paletteOpen: true, query: '', pi: 0, spawnHint: false }),
+      openBestiary: () => this.setState({ paletteOpen: true, query: '', pi: 0, spawnHint: true }),
       closePalette: () => this.setState({ paletteOpen: false }),
       stop: e => e.stopPropagation(),
       paletteRef: el => { this.pal = el; if (el) el.focus(); },
@@ -1569,7 +1673,7 @@ class Component extends DCLogic {
       pdfInputRef: el => { this._pdfInput = el; },
       onPdfFile: e => { if (e.target.files && e.target.files[0]) this.loadPdfFile(e.target.files[0]); e.target.value = ''; },
       openPdfPicker: () => { if (this._pdfInput) this._pdfInput.click(); },
-      onQuery: e => this.setState({ query: e.target.value, pi: 0 }),
+      onQuery: e => this.setState({ query: e.target.value, pi: 0, spawnHint: false }),
       onPaletteKey: e => this.onPaletteKey(e),
       onNavQuery: e => this.setState({ navQuery: e.target.value }),
       campaignNames: Object.keys(s.campaigns).sort(), campaign: s.campaign, canDeleteCampaign: !!s.campaign,
@@ -1655,8 +1759,9 @@ class Component extends DCLogic {
 
       order: s.combatants.map(c => ({
         name: c.name, init: c.init, badge: c.badge, pct: pct(c), color: col(c),
+        active: c.id === active.id ? 'yes' : 'no',
         hpLabel: c.pc ? c.hp + '/' + c.max : c.hp === 0 ? 'down' : c.hp + '/' + c.max,
-        row: 'display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 7px; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
+        row: 'display: flex; align-items: center; gap: 9px; width: 100%; padding: 6px 7px; text-align: left; border: 0; border-radius: 7px; cursor: pointer; font-family: inherit; background: ' + (c.id === active.id ? '#1c1730' : c.id === s.sel ? '#191f26' : 'transparent') + '; box-shadow: ' + (c.id === active.id ? ('inset 3px 0 0 0 #a78bfa' + (c.id === s.sel ? ', inset 0 0 0 1px #3a3352' : '')) : c.id === s.sel ? 'inset 0 0 0 1px #3a3352' : 'none') + '; opacity: ' + (c.hp === 0 ? .55 : 1) + ';',
         initBox: 'width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 6px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: ' + (c.id === active.id ? '#2c2140' : '#191f26') + '; color: ' + (c.id === active.id ? '#c4b2ff' : '#8b95a3') + ';',
         nameStyle: 'font-size: 12.5px; font-weight: ' + (c.id === active.id ? 600 : 400) + '; color: ' + (c.hp === 0 ? '#6f7987' : '#e6e9ee') + '; text-decoration: ' + (c.hp === 0 ? 'line-through' : 'none') + ';',
         pick: () => this.setState({ sel: c.id }),

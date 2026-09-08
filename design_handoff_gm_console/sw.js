@@ -2,7 +2,7 @@
 // The page has no external dependencies (React, ReactDOM, and the fonts are all
 // vendored locally), so caching every same-origin GET makes it fully installable
 // and usable offline after the first visit.
-const CACHE = 'dmscreen-v2';
+const CACHE = 'dmscreen-v3';
 const SHELL = './DM%20Screen.dc.html';
 const CORE = [
   SHELL,
