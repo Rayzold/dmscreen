@@ -556,7 +556,7 @@
         <span style="color: #5f6875; font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;">Initiative · round {{ round }}</span>
         <span class="help" title="Turn order. Drag any row by its ⠿ grip to reorder manually; ↕ re-sorts by initiative. The active combatant gets a violet accent bar and its map token rings — it auto-scrolls into view as turns advance; click a row to select it. 'Next' (⏎) advances the turn; timed conditions count down each new round. Downed combatants dim and strike through. 🐉 adds a monster from the bestiary with its initiative rolled; ＋ adds a blank combatant. ⌘Z undoes the last change; the fight is auto-saved and survives a refresh.">?</span>
         <span style="flex: 1;"></span>
-        <button onClick="{{ openBestiary }}" style="background: #17210f; border: 1px solid #2e3d1c; border-radius: 6px; color: #9fce6b; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #46602a;" title="Add a monster from the bestiary (rolls its initiative)">🐉</button>
+        <button onClick="{{ openBestiary }}" style="background: #17210f; border: 1px solid #2e3d1c; border-radius: 6px; color: #9fce6b; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: #46602a;" title="Add creatures: a whole encounter group or a single monster from the bestiary (each rolls initiative). Also: save the current foes as a reusable encounter.">🐉</button>
         <button onClick="{{ sortInit }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 7px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Sort the order by initiative (highest first)">↕</button>
         <button onClick="{{ addCombatant }}" style="background: #191f26; border: 1px solid #2b333d; border-radius: 6px; color: #c3cad4; font-family: inherit; font-size: 12px; padding: 3px 8px; cursor: pointer;" style-hover="border-color: var(--acc-hover);" title="Add a blank combatant to the initiative">＋</button>
         <button onClick="{{ nextTurn }}" style="background: var(--acc-bg); border: 1px solid var(--acc-border); border-radius: 6px; color: var(--acc-light); font-family: inherit; font-size: 11px; padding: 3px 9px; cursor: pointer;" style-hover="background: var(--acc-bg2);" title="Advance to the next combatant's turn (keyboard shortcut: Enter). Wraps to the top and bumps the round.">Next ⏎</button>
@@ -652,7 +652,7 @@
   <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ closePalette }}" style="position: fixed; inset: 0; background: rgba(6,8,11,.62); backdrop-filter: blur(3px); z-index: 90; display: flex; justify-content: center; padding-top: 96px;">
       <div onClick="{{ stop }}" style="width: 620px; max-height: 460px; background: #14181d; border: 1px solid #333b47; border-radius: 13px; box-shadow: 0 30px 80px rgba(0,0,0,.75); display: flex; flex-direction: column; overflow: hidden;">
-        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onPaletteKey }}" aria-label="Search rules, screens, tiles, monsters and Notion pages" placeholder="Search rules, screens, tiles, monsters, Notion pages…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
+        <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" onKeyDown="{{ onPaletteKey }}" aria-label="Search rules, screens, tiles, monsters and Notion pages" placeholder="Search rules, screens, tiles, monsters, encounters, Notion pages…" style="height: 46px; padding: 0 16px; background: none; border: 0; border-bottom: 1px solid #232a33; color: #e6e9ee; font-family: inherit; font-size: 15px; outline: none;">
         <div role="listbox" aria-label="Search results" style="overflow: auto; padding: 6px;">
           <sc-for list="{{ results }}" as="r" hint-placeholder-count="6">
             <button onClick="{{ r.open }}" role="option" aria-selected="{{ r.selected }}" style="{{ r.rowStyle }}" style-hover="background: #1c222a;">
@@ -765,6 +765,19 @@ const ACCENTS = {
 };
 const ACCENT_ORDER = ['violet', 'emerald', 'amber', 'crimson', 'azure'];
 
+// Built-in encounter groups — drop a whole pack into initiative at once.
+// `ref` points at a MONSTERS name; `count` is how many to spawn.
+const ENCOUNTER_GROUPS = [
+  { name: 'Wolf Pack', note: '3 wolves', members: [{ ref: 'Wolf', count: 3 }] },
+  { name: 'Dire Pack', note: 'a dire wolf leads two wolves', members: [{ ref: 'Dire Wolf', count: 1 }, { ref: 'Wolf', count: 2 }] },
+  { name: 'Bandit Ambush', note: 'a captain and three bandits', members: [{ ref: 'Bandit Captain', count: 1 }, { ref: 'Bandit', count: 3 }] },
+  { name: 'Goblin Warband', note: 'four goblins and a wolf', members: [{ ref: 'Goblin', count: 4 }, { ref: 'Wolf', count: 1 }] },
+  { name: 'Orc Raiders', note: 'three orcs and an ogre', members: [{ ref: 'Orc', count: 3 }, { ref: 'Ogre', count: 1 }] },
+  { name: 'Undead Rising', note: 'three skeletons, two zombies', members: [{ ref: 'Skeleton', count: 3 }, { ref: 'Zombie', count: 2 }] },
+  { name: 'Cult Cell', note: 'an acolyte and three cultists', members: [{ ref: 'Acolyte', count: 1 }, { ref: 'Cultist', count: 3 }] },
+  { name: 'Town Watch', note: 'a veteran and three guards', members: [{ ref: 'Veteran', count: 1 }, { ref: 'Guard', count: 3 }] }
+];
+
 // --- Music library helpers ------------------------------------------------
 const MUSIC_CATS = ['Combat', 'Boss', 'Tavern & Town', 'Dungeon', 'Horror', 'Tension', 'Ritual', 'Travel', 'Rest & Sorrow', 'Other'];
 // Guess a track's category from its filename (works with these libraries'
@@ -803,7 +816,7 @@ class Component extends DCLogic {
     pi: 0, tool: 'dice', sel: 'c1', tiles: 5, screen: 'a', muted: false, castFallback: false, advMode: 'norm',
     leftOpen: true, rightOpen: true, undo: [], spawnHint: false,
     flash: null, dense: false, chime: false, accent: 'violet',
-    lair: false,
+    lair: false, encounters: {},
     tracks: [], libStatus: 'none', musicCat: 'All', nowPlaying: null, musicPlaying: false, musicVol: 70, catOverrides: {},
     presets: [], preset: '', layerSeq: 3,
     noteTitle: 'They took the shrine road', noteBody: 'Nobody prepped this. Improvise from the bandit table.',
@@ -870,6 +883,7 @@ class Component extends DCLogic {
     this.loadCampaignList();
     this.loadPanels();
     this.loadEncounter();           // restore a combat left running from last time
+    this.loadEncounters();          // saved encounter groups (drop a whole pack)
     this._lastTurn = this.state.turn;
     this.reconnectLibrary();        // re-open a remembered music folder if any
   }
@@ -1456,6 +1470,64 @@ class Component extends DCLogic {
     });
   }
 
+  /* --- Encounter groups (drop a whole pack; save the current fight) --------- */
+  expandGroup(members) {
+    const stats = [];
+    for (const m of members) {
+      const mon = MONSTERS.find(x => x.name === m.ref);
+      if (!mon) continue;
+      for (let i = 0; i < m.count; i++) stats.push({ name: mon.name, hp: mon.hp, max: mon.hp, ac: mon.ac, badge: mon.badge, abil: mon.abil, attacks: mon.attacks });
+    }
+    return stats;
+  }
+  allGroups() {
+    const out = ENCOUNTER_GROUPS.map(g => ({ name: g.name, note: g.note, saved: false, stats: this.expandGroup(g.members) }));
+    const enc = this.state.encounters || {};
+    for (const name of Object.keys(enc).sort()) out.push({ name, note: 'saved · ' + enc[name].length + ' foes · ⌥click to delete', saved: true, stats: enc[name] });
+    return out;
+  }
+  loadEncounters() { try { const e = JSON.parse(localStorage.getItem('dmscreen.encounters') || '{}'); if (e && typeof e === 'object') this.setState({ encounters: e }); } catch (e) {} }
+  // Spawn every creature in a group in one undoable step; each rolls its own
+  // initiative and is inserted in order, with names de-duplicated (Wolf, Wolf 2…).
+  spawnGroup(label, statList) {
+    if (!statList || !statList.length) return;
+    this.mutate(s => {
+      const activeId = s.combatants[s.turn] ? s.combatants[s.turn].id : null;
+      const combatants = [...s.combatants];
+      const used = new Map(); combatants.forEach(c => used.set(c.name, true));
+      const uniq = base => { if (!used.has(base)) { used.set(base, true); return base; } let n = 2; while (used.has(base + ' ' + n)) n++; used.set(base + ' ' + n, true); return base + ' ' + n; };
+      const added = statList.map((st, k) => {
+        const dex = (st.abil && st.abil.dex) || 0;
+        return { id: 'g' + Date.now().toString(36) + k, name: uniq(st.name), init: 1 + Math.floor(Math.random() * 20) + dex,
+          hp: st.hp, max: st.max || st.hp, ac: st.ac, pc: false, badge: st.badge || 'foe',
+          x: 28 + Math.floor(Math.random() * 46), y: 24 + Math.floor(Math.random() * 52),
+          conds: [], conc: null, abil: { ...(st.abil || {}) }, attacks: (st.attacks || []).map(a => ({ ...a })),
+          ...(st.legendary ? { legendary: { max: st.legendary.max, used: 0 } } : {}) };
+      });
+      added.forEach(nc => { let idx = combatants.findIndex(c => c.init < nc.init); if (idx < 0) idx = combatants.length; combatants.splice(idx, 0, nc); });
+      const i = combatants.findIndex(c => c.id === activeId);
+      return { combatants, turn: i < 0 ? 0 : i, sel: added[0].id, paletteOpen: false, spawnHint: false,
+        log: [...s.log, { t: this.clockShort(), text: 'Dropped encounter “' + label + '” — ' + added.length + ' creatures' }].slice(-40) };
+    });
+  }
+  // Save the current foes (everything not a PC) as a named, reusable encounter.
+  saveEncounter() {
+    const foes = this.state.combatants.filter(c => !c.pc);
+    if (!foes.length) { this.setState({ paletteOpen: false }); this.logIt('No foes on the board to save'); return; }
+    const name = (window.prompt('Save these ' + foes.length + ' foes as an encounter named:', '') || '').trim();
+    if (!name) { this.setState({ paletteOpen: false }); return; }
+    const members = foes.map(c => ({ name: c.name.replace(/\s+\d+$/, ''), hp: c.max, max: c.max, ac: c.ac, badge: c.badge, abil: { ...(c.abil || {}) }, attacks: (c.attacks || []).map(a => ({ ...a })), ...(c.legendary ? { legendary: { max: c.legendary.max, used: 0 } } : {}) }));
+    this.setState(s => {
+      const encounters = { ...s.encounters, [name]: members };
+      try { localStorage.setItem('dmscreen.encounters', JSON.stringify(encounters)); } catch (e) {}
+      return { encounters, paletteOpen: false, spawnHint: false, log: [...s.log, { t: this.clockShort(), text: 'Saved encounter “' + name + '” (' + members.length + ' foes)' }].slice(-40) };
+    });
+  }
+  deleteEncounter(name) {
+    this.setState(s => { const encounters = { ...s.encounters }; delete encounters[name]; try { localStorage.setItem('dmscreen.encounters', JSON.stringify(encounters)); } catch (e) {} return { encounters }; });
+    this.logIt('Deleted encounter “' + name + '”');
+  }
+
   /* --- Legendary actions (a per-round pool on a boss combatant) -------------- */
   setLegendaryMax(delta) {
     this.mutate(s => ({ combatants: s.combatants.map(c => {
@@ -1483,18 +1555,25 @@ class Component extends DCLogic {
     for (const p of PREFABS) out.push({ kind: 'tile', title: p.name, sub: 'prefab · ' + p.count, _prefab: p });
     for (const c of s.combatants) out.push({ kind: 'monster', title: c.name, sub: (c.pc ? 'player character · ' + c.badge : 'hostile · ' + c.badge) + ' · ' + c.hp + '/' + c.max + ' hp', _id: c.id });
     for (const l of LINKS) out.push({ kind: 'link', title: l.title, sub: l.sub, _url: l.url });
+    for (const g of this.allGroups()) out.push({ kind: 'group', title: g.name, sub: g.note, _stats: g.stats, _saved: g.saved });
     for (const mo of MONSTERS) out.push({ kind: 'spawn', title: mo.name, sub: 'bestiary · add to initiative · ' + mo.hp + ' hp · AC ' + mo.ac, _mon: mo });
     return out;
   }
   paletteHits() {
     const s = this.state;
     const q = s.query.trim().toLowerCase();
-    // Empty query behind the 🐉 button shows the bestiary so you can just pick one.
-    if (!q && s.spawnHint) return MONSTERS.map(mo => ({ kind: 'spawn', title: mo.name, sub: 'bestiary · add to initiative · ' + mo.hp + ' hp · AC ' + mo.ac, _mon: mo })).slice(0, 7);
+    // Empty query behind the 🐉 button: a "save current foes" action, then the
+    // encounter groups, then every single creature in the bestiary.
+    if (!q && s.spawnHint) {
+      const out = [{ kind: 'saveenc', title: 'Save current foes as an encounter…', sub: 'store this fight to drop again later' }];
+      for (const g of this.allGroups()) out.push({ kind: 'group', title: g.name, sub: g.note, _stats: g.stats, _saved: g.saved });
+      for (const mo of MONSTERS) out.push({ kind: 'spawn', title: mo.name, sub: 'bestiary · ' + mo.hp + ' hp · AC ' + mo.ac, _mon: mo });
+      return out;
+    }
     return this.searchIndex().filter(r => !q || (r.title + ' ' + (r.book || '') + ' ' + (r.body || '') + ' ' + (r.sub || '')).toLowerCase().includes(q)).slice(0, 7);
   }
 
-  openResult(r) {
+  openResult(r, ev) {
     const t = this.clockShort();
     // One setState with every change (this runtime renders from the first
     // setState of a tick, so a follow-up logIt() would be dropped).
@@ -1514,6 +1593,11 @@ class Component extends DCLogic {
       this.setState(s => ({ paletteOpen: false, log: [...s.log, { t, text: 'Opened “' + r.title + '” in Notion' }].slice(-40) }));
     } else if (r.kind === 'spawn') {
       this.spawnMonster(r._mon);   // closes the palette inside its own mutate()
+    } else if (r.kind === 'group') {
+      if (r._saved && ev && ev.altKey) { this.deleteEncounter(r.title); }   // ⌥-click a saved encounter to delete it (palette stays open)
+      else this.spawnGroup(r.title, r._stats);
+    } else if (r.kind === 'saveenc') {
+      this.saveEncounter();
     } else {
       this.setState({ paletteOpen: false });
     }
@@ -1782,8 +1866,8 @@ class Component extends DCLogic {
     const hits = this.paletteHits();
     const pi = Math.min(s.pi, Math.max(0, hits.length - 1));
 
-    const kindBg = { rule: 'var(--acc-bg)', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328', spawn: '#1b2417' };
-    const kindFg = { rule: 'var(--acc-light)', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4', spawn: '#9fce6b' };
+    const kindBg = { rule: 'var(--acc-bg)', screen: '#132420', tile: '#241f13', monster: '#211514', link: '#132328', spawn: '#1b2417', group: '#241a10', saveenc: '#101a1e' };
+    const kindFg = { rule: 'var(--acc-light)', screen: '#74c3a7', tile: '#d0b25a', monster: '#e08d7c', link: '#7fb4c4', spawn: '#9fce6b', group: '#e0a95a', saveenc: '#7fb4c4' };
     const kindStyle = k => 'padding: 2px 7px; border-radius: 5px; font-size: 9.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; background: ' + (kindBg[k] || '#241f13') + '; color: ' + (kindFg[k] || '#d0b25a') + ';';
 
     const excerpt = RULES[s.excerpt];
@@ -2068,11 +2152,11 @@ class Component extends DCLogic {
       exportLog: () => this.exportLog(),
 
       results: hits.map((r, i) => ({
-        kind: r.kind, kindStyle: kindStyle(r.kind), title: r.title,
+        kind: ({ spawn: 'add', saveenc: 'save', group: 'group' }[r.kind] || r.kind), kindStyle: kindStyle(r.kind), title: r.title,
         sub: r.sub || r.body, meta: r.book ? r.book + ' p.' + r.page : 'open',
         selected: i === pi ? 'true' : 'false',
         rowStyle: 'display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; color: inherit; font-family: inherit; text-align: left; cursor: pointer; background: ' + (i === pi ? '#1c222a' : 'none') + ';',
-        open: () => this.openResult(r)
+        open: e => this.openResult(r, e)
       })),
       noResults: hits.length === 0
     };
